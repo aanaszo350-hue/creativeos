@@ -7,6 +7,9 @@ on:
       - 'base.html'
       - 'creativeos-enhancements.css'
       - 'creativeos-enhancements.js'
+      - 'creativeos-ux-v4.css'
+      - 'creativeos-ux-v4.js'
+      - 'creativeos-bridge-schema.json'
       - 'scripts/apply_assets_patch.py'
       - 'scripts/build_unified_v2.py'
       - '.github/workflows/build-unified-v2.yml'
@@ -32,7 +35,10 @@ jobs:
             'no iframe wrapper':'id="appframe"' not in s,
             'assets workspace':'Assets workspace — product → category → file' in s,
             'unified enhancements':'creativeos-enhancements.js?v=3' in s,
+            'workflow center':'creativeos-ux-v4.js?v=1' in s,
+            'workflow styles':'creativeos-ux-v4.css?v=1' in s,
             'concept editor shell':'id="conceptEditor"' in s,
+            'bridge schema':Path('creativeos-bridge-schema.json').exists(),
           }
           failed=[k for k,v in checks.items() if not v]
           if failed: raise SystemExit('Validation failed: '+', '.join(failed))
@@ -47,5 +53,5 @@ jobs:
             echo "No production changes"
             exit 0
           fi
-          git commit -m "Build unified CreativeOS v2"
+          git commit -m "Build CreativeOS workflow center"
           git push
