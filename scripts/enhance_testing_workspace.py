@@ -94,9 +94,8 @@ replace_once(
 )
 
 # Interactive handlers: safe delete + reuse a proven angle in ChatGPT context.
-needle = '    else if(a==="add-avatar") addAvatarModal(t.dataset.productId);\n    else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);'
-insert = '''    else if(a==="add-avatar") addAvatarModal(t.dataset.productId);
-    else if(a==="delete-avatar"){
+needle = '    else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);'
+insert = '''    else if(a==="delete-avatar"){
       const p=product(t.dataset.productId);if(!p)return;
       const av=(p.avatars||[]).find(x=>x.id===t.dataset.avatarId);if(!av)return;
       if(!confirm(`¿Eliminar el avatar “${av.name}”? Los vídeos publicados conservarán su nombre como histórico.`))return;
