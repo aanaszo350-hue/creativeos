@@ -1,0 +1,32 @@
+name: Fix concept editor performance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/fix_concept_editor_perf.py'
+      - '.github/workflows/fix-concept-editor-performance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply performance fix
+        run: python3 scripts/fix_concept_editor_perf.py
+      - name: Commit fixed editor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add concept-editor.js index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Fix concept editor render loop"
+          git push
