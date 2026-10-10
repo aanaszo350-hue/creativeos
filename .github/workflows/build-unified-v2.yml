@@ -1,0 +1,51 @@
+name: Build unified CreativeOS v2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'base.html'
+      - 'creativeos-enhancements.css'
+      - 'creativeos-enhancements.js'
+      - 'scripts/apply_assets_patch.py'
+      - 'scripts/build_unified_v2.py'
+      - '.github/workflows/build-unified-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build production index
+        run: python3 scripts/build_unified_v2.py
+      - name: Validate production index
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          checks={
+            'no iframe wrapper':'id="appframe"' not in s,
+            'assets workspace':'Assets workspace — product → category → file' in s,
+            'unified enhancements':'creativeos-enhancements.js?v=3' in s,
+            'concept editor shell':'id="conceptEditor"' in s,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed: raise SystemExit('Validation failed: '+', '.join(failed))
+          print('Validation OK')
+          PY
+      - name: Commit production build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No production changes"
+            exit 0
+          fi
+          git commit -m "Build unified CreativeOS v2"
+          git push
