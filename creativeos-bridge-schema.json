@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aanaszo350-hue.github.io/creativeos/creativeos-bridge-schema.json",
+  "title": "CreativeOS ChatGPT Bridge v1",
+  "description": "Stable client-side contract for exporting the active CreativeOS context. A future backend connector can expose the same shape without changing the ChatGPT workflow.",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "selectedContext"],
+  "properties": {
+    "schemaVersion": {"const": "creativeos.bridge.v1"},
+    "generatedAt": {"type": "string", "format": "date-time"},
+    "selectedContext": {
+      "type": "object",
+      "properties": {
+        "product": {"type": ["object", "null"]},
+        "concept": {"type": ["object", "null"]},
+        "video": {"type": ["object", "null"]},
+        "avatar": {"type": ["object", "null"]},
+        "assets": {"type": "array", "items": {"type": "object"}},
+        "mode": {"type": ["string", "null"]},
+        "instruction": {"type": "string"},
+        "locks": {"type": "object"}
+      },
+      "required": ["product", "concept", "video", "avatar", "assets", "instruction", "locks"]
+    },
+    "testing": {
+      "type": ["object", "null"],
+      "properties": {
+        "published": {"type": "number"},
+        "concepts": {"type": "number"},
+        "avatars": {"type": "number"},
+        "angles": {"type": "number"},
+        "views": {"type": "number"},
+        "comments": {"type": "number"},
+        "sales": {"type": "number"},
+        "bestViews": {"type": "number"},
+        "next": {"type": "string"}
+      }
+    }
+  }
+}
