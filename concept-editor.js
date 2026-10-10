@@ -109,14 +109,14 @@
       if(add){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();newConcept();return}
     },true);
     const decorate=()=>{
-      doc.querySelectorAll('[data-action="concept-detail"]').forEach(b=>{b.textContent='Editar ficha'});
+      doc.querySelectorAll('[data-action="concept-detail"]').forEach(b=>{if(b.textContent!=='Editar ficha') b.textContent='Editar ficha'});
       const st=getState();
       doc.querySelectorAll('.concept-card').forEach(card=>{
         const b=card.querySelector('[data-action="concept-detail"]');if(!b)return;
         const c=(st.concepts||[]).find(x=>x.id===b.dataset.id);if(!c)return;
         let x=card.querySelector('.concept-video-count');
         if(!x){x=doc.createElement('span');x.className='chip concept-video-count';const top=card.querySelector('.concept-top');if(top)top.appendChild(x)}
-        if(x)x.textContent=`${(c.videoRefs||[]).length} vídeos`;
+        if(x){const label=`${(c.videoRefs||[]).length} vídeos`;if(x.textContent!==label)x.textContent=label;}
       });
     };
     decorate();
