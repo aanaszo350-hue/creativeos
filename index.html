@@ -782,8 +782,8 @@ tr:hover td{background:#111722}
 
   function productWorkspace(p){
     const score=coverageScore(p), sig=testSignal(p);
-    const tabs=["overview","assets","avatars","videos","concepts"];
-    const labels={overview:"Resumen",assets:"Assets",avatars:"Avatares",videos:"Vídeos publicados",concepts:"Conceptos probados"};
+    const tabs=["overview","assets","avatars","videos","concepts","angles"];
+    const labels={overview:"Resumen",assets:"Assets",avatars:"Avatares",videos:"Vídeos publicados",concepts:"Conceptos probados",angles:"Ángulos de venta"};
     return shell(`
       <div class="workspace-head">
         <div class="workspace-product"><div class="workspace-logo">${esc(p.name.slice(0,2).toUpperCase())}</div><div class="workspace-copy"><h1>${esc(p.name)}</h1><p>${esc(p.label)} · Día ${p.day}/${p.testMax} · ${p.published} creativos publicados</p></div></div>
@@ -814,12 +814,24 @@ tr:hover td{background:#111722}
       <div class="avatar-grid">${p.avatars.map(a=>avatarCard(a,p.id)).join("")}</div>`;
     }
     if(tab==="videos"){
-      const list=state.videos.filter(v=>v.productId===p.id);
+      const list=state.videos.filter(v=>v.productId===p.id && v.published);
       return `<div class="section-title"><div><h2>Creativos publicados</h2><p>Solo un vídeo publicado cuenta como unidad de test. Los intentos de generación no.</p></div><button class="btn" data-action="add-published" data-product-id="${p.id}">${icon("plus")} Registrar publicado</button></div>
       ${videoTable(list)}`;
     }
+    if(tab==="angles"){
+      const published=state.videos.filter(v=>v.productId===p.id && v.published && String(v.angle||"").trim());
+      const groups=new Map();
+      published.forEach(v=>{
+        const key=String(v.angle||"").trim();
+        if(!groups.has(key)) groups.set(key,{name:key,videos:[],views:0,comments:0,sales:0,best:0});
+        const g=groups.get(key);g.videos.push(v);g.views+=Number(v.views||0);g.comments+=Number(v.comments||0);g.sales+=Number(v.sales||0);g.best=Math.max(g.best,Number(v.views||0));
+      });
+      const list=[...groups.values()].sort((a,b)=>b.views-a.views || b.sales-a.sales);
+      return `<div class="section-title"><div><h2>Ángulos de venta probados</h2><p>${list.length} ángulo${list.length===1?'':'s'} contabilizado${list.length===1?'':'s'} a partir de vídeos publicados.</p></div></div>
+      ${list.length?`<div class="grid cols-3">${list.map(g=>`<div class="card pad"><div class="concept-name">${esc(g.name)}</div><div class="concept-desc">Rendimiento acumulado de este ángulo dentro de ${esc(p.name)}.</div><div class="concept-stats"><div class="concept-stat"><b>${g.videos.length}</b><span>Publicados</span></div><div class="concept-stat"><b>${fmt(g.views)}</b><span>Views</span></div><div class="concept-stat"><b>${fmt(Math.round(g.views/Math.max(g.videos.length,1)))}</b><span>Media</span></div></div><div class="concept-stats" style="margin-top:8px"><div class="concept-stat"><b>${fmt(g.best)}</b><span>Mejor</span></div><div class="concept-stat"><b>${g.comments}</b><span>Comentarios</span></div><div class="concept-stat"><b>${g.sales}</b><span>Ventas</span></div></div><div class="card-actions" style="margin-top:12px"><button class="btn small primary" data-action="use-sales-angle" data-angle="${esc(g.name)}">Usar en ChatGPT</button></div></div>`).join("")}</div>`:`<div class="empty"><b>Aún no hay ángulos de venta probados</b><span>Cuando publiques un vídeo y rellenes “Ángulo de venta”, aparecerá aquí automáticamente.</span></div>`}`;
+    }
     if(tab==="concepts"){
-      const ids=new Set(state.videos.filter(v=>v.productId===p.id).map(v=>v.conceptId));
+      const ids=new Set(state.videos.filter(v=>v.productId===p.id && v.published).map(v=>v.conceptId));
       const list=state.concepts.filter(c=>ids.has(c.id));
       return `<div class="section-title"><div><h2>Conceptos probados</h2><p>${p.conceptsTested} conceptos contabilizados en el test.</p></div><button class="btn" data-route="concepts">Abrir biblioteca global</button></div>
       <div class="grid cols-3">${list.map(c=>`<div class="card pad"><div class="concept-name">${esc(c.name)}</div><div class="concept-desc">${esc(c.desc)}</div><div class="chips">${c.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div><div class="card-actions" style="margin-top:12px"><button class="btn small primary" data-select-concept="${c.id}">Seleccionar</button></div></div>`).join("")}</div>`;
@@ -898,6 +910,7 @@ tr:hover td{background:#111722}
         <div class="asset-preview">${media}</div>
         <div class="asset-check ${sel?'selected':''}" data-select-asset="${a.id}" data-product-id="${pid}">${sel?'✓':'+'}</div>
         <div class="asset-meta"><b>${esc(a.name)}</b><span>${esc(a.type)}</span></div>
+        <div class="card-actions" style="padding:0 10px 10px"><button class="btn small danger" data-action="delete-asset" data-product-id="${pid}" data-asset-id="${a.id}">Eliminar</button></div>
       </div>`;
     }).join("")}</div>`;
   }
@@ -910,13 +923,13 @@ tr:hover td{background:#111722}
         <div class="meta-row"><span>Función</span><span>${esc(a.role)}</span></div>
         <div class="meta-row"><span>Ángulo</span><span>${esc(a.angle)}</span></div>
       </div>
-      <div class="card-actions" style="margin-top:11px"><button class="btn small ${sel?'green':'primary'}" data-select-avatar="${a.id}" data-product-id="${pid}">${sel?'Seleccionado ✓':'Seleccionar para ChatGPT'}</button></div>
+      <div class="card-actions" style="margin-top:11px"><button class="btn small ${sel?'green':'primary'}" data-select-avatar="${a.id}" data-product-id="${pid}">${sel?'Seleccionado ✓':'Seleccionar para ChatGPT'}</button><button class="btn small danger" data-action="delete-avatar" data-product-id="${pid}" data-avatar-id="${a.id}">Eliminar</button></div>
     </div>`;
   }
   function videoTable(list){
     if(!list.length) return `<div class="empty"><b>Aún no hay creativos publicados</b><span>Los intentos de generación no cuentan como test hasta que publiques el vídeo.</span></div>`;
     return `<div class="table-wrap"><table><thead><tr><th>Vídeo</th><th>Concepto</th><th>Avatar</th><th>Variación</th><th>Views</th><th>Comentarios</th><th>Ventas</th><th>Contexto</th></tr></thead><tbody>
-      ${list.map(v=>`<tr><td><b>${esc(v.title)}</b></td><td>${esc(concept(v.conceptId)?.name||"—")}</td><td>${esc(avatarById(v.avatarId)?.name||"—")}</td><td>${esc(v.variation||"—")}</td>
+      ${list.map(v=>`<tr><td><b>${esc(v.title)}</b></td><td>${esc(concept(v.conceptId)?.name||"—")}</td><td>${esc(avatarById(v.avatarId)?.name||v.avatarName||"—")}</td><td>${esc(v.variation||"—")}</td>
       <td><input class="inline-input" data-video-metric="${v.id}" data-field="views" value="${v.views}"></td><td><input class="inline-input" data-video-metric="${v.id}" data-field="comments" value="${v.comments}"></td><td><input class="inline-input" data-video-metric="${v.id}" data-field="sales" value="${v.sales}"></td>
       <td><button class="btn small" data-select-video="${v.id}">Seleccionar</button></td></tr>`).join("")}
     </tbody></table></div>`;
@@ -945,6 +958,7 @@ tr:hover td{background:#111722}
         <div class="asset-preview">${media}</div>
         <div class="asset-check ${sel?'selected':''}" data-select-asset="${a.id}" data-product-id="${a.productId||p.id}">${sel?'✓':'+'}</div>
         <div class="asset-meta"><b>${esc(a.name)}</b><span>${query?esc(a.productName)+" · ":""}${esc(a.type)}</span></div>
+        <div class="card-actions" style="padding:0 10px 10px"><button class="btn small danger" data-action="delete-asset" data-product-id="${a.productId||p.id}" data-asset-id="${a.id}">Eliminar</button></div>
       </div>`;
     }).join(""):`<div class="assets-empty"><b>${query?'No hay resultados':'Esta categoría está vacía'}</b><span>${query?'Prueba otra búsqueda.':'Añade la primera referencia de este tipo para '+esc(p.name)+'.'}</span></div>`;
     return shell(`
@@ -1032,7 +1046,7 @@ tr:hover td{background:#111722}
       <div class="job-copy">
         <div style="display:flex;justify-content:space-between;gap:10px"><div><span class="badge ${st[1]}">${st[0]}</span><h3>${esc(j.title)}</h3></div><span class="badge">V${j.version}</span></div>
         <p>${esc(p?.name||"")} · ${esc(j.mode)} · ${esc(j.model)}</p>
-        <div class="job-meta"><span class="chip">${esc(concept(j.conceptId)?.name||"Sin concepto")}</span><span class="chip">${esc(avatarById(j.avatarId)?.name||"Sin avatar")}</span></div>
+        <div class="job-meta"><span class="chip">${esc(concept(j.conceptId)?.name||"Sin concepto")}</span><span class="chip">${esc(avatarById(j.avatarId)?.name||j.avatarName||"Sin avatar")}</span></div>
         ${j.status==="generating"||j.status==="queued"?`<div class="progress"><i style="width:${j.progress}%"></i></div><div class="status-line">${j.progress}% · puedes seguir trabajando en otro producto mientras termina.</div>`:""}
         ${j.note?`<div class="review-note">${esc(j.note)}</div>`:""}
         ${j.feedback?`<div class="review-note"><b>Último feedback:</b> ${esc(j.feedback)}</div>`:""}
@@ -1124,9 +1138,9 @@ tr:hover td{background:#111722}
     p.comments=vs.reduce((a,v)=>a+Number(v.comments||0),0);
     p.sales=vs.reduce((a,v)=>a+Number(v.sales||0),0);
     p.bestViews=vs.reduce((a,v)=>Math.max(a,Number(v.views||0)),0);
-    p.conceptsTested=new Set(vs.map(v=>v.conceptId).filter(Boolean)).size || p.conceptsTested;
-    p.avatarsTested=new Set(vs.map(v=>v.avatarId).filter(Boolean)).size || p.avatarsTested;
-    p.anglesTested=new Set(vs.map(v=>v.angle).filter(Boolean)).size || p.anglesTested;
+    p.conceptsTested=new Set(vs.map(v=>v.conceptId).filter(Boolean)).size;
+    p.avatarsTested=new Set(vs.map(v=>v.avatarId||v.avatarName).filter(Boolean)).size;
+    p.anglesTested=new Set(vs.map(v=>String(v.angle||"").trim()).filter(Boolean)).size;
   }
 
   function route(r){
@@ -1380,6 +1394,31 @@ tr:hover td{background:#111722}
     else if(a==="add-avatar") addAvatarModal(t.dataset.productId);
     else if(a==="assets-pick-product"){state.ui.assetsProductId=t.dataset.productId;state.ui.assetSearch="";state.context.productId=t.dataset.productId;save();render();}
     else if(a==="assets-pick-category"){state.ui.assetsCategory=t.dataset.category;state.ui.assetSearch="";save();render();}
+    else if(a==="delete-avatar"){
+      const p=product(t.dataset.productId);if(!p)return;
+      const av=(p.avatars||[]).find(x=>x.id===t.dataset.avatarId);if(!av)return;
+      if(!confirm(`¿Eliminar el avatar “${av.name}”? Los vídeos publicados conservarán su nombre como histórico.`))return;
+      state.videos.filter(v=>v.productId===p.id && v.avatarId===av.id).forEach(v=>{v.avatarName=v.avatarName||av.name;v.avatarId=null;});
+      state.jobs.filter(j=>j.productId===p.id && j.avatarId===av.id).forEach(j=>{j.avatarName=j.avatarName||av.name;j.avatarId=null;});
+      p.avatars=(p.avatars||[]).filter(x=>x.id!==av.id);
+      if(state.context.avatarId===av.id)state.context.avatarId=null;
+      recalcProduct(p.id);save();render();toast("Avatar eliminado; historial conservado");
+    }
+    else if(a==="delete-asset"){
+      const p=product(t.dataset.productId);if(!p)return;
+      const asset=(p.assets||[]).find(x=>x.id===t.dataset.assetId);if(!asset)return;
+      if(!confirm(`¿Eliminar el asset “${asset.name}”?`))return;
+      p.assets=(p.assets||[]).filter(x=>x.id!==asset.id);
+      state.context.assetIds=(state.context.assetIds||[]).filter(id=>id!==asset.id);
+      save();render();toast("Asset eliminado");
+    }
+    else if(a==="use-sales-angle"){
+      const angle=t.dataset.angle||"";
+      state.context.productId=state.ui.openProductId||state.context.productId;
+      const line=`Ángulo de venta: ${angle}.`;
+      if(!String(state.context.instruction||"").includes(line))state.context.instruction=[state.context.instruction,line].filter(Boolean).join(" ");
+      save();render();toast("Ángulo añadido al contexto de ChatGPT");
+    }
     else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);
     else if(a==="add-published") addPublishedModal(t.dataset.productId);
     else if(a==="mark-published"){const j=state.jobs.find(x=>x.id===t.dataset.jobId);if(j)addPublishedModal(j.productId,j.id);}
@@ -1418,7 +1457,9 @@ tr:hover td{background:#111722}
     }
     else if(a==="create-published"){
       const pid=t.dataset.productId;
-      const v={id:uid("v"),productId:pid,title:document.getElementById("f-title").value||"Creativo publicado",conceptId:document.getElementById("f-concept").value||null,avatarId:document.getElementById("f-avatar").value||null,angle:document.getElementById("f-angle").value||"",published:true,views:Number(document.getElementById("f-views").value)||0,comments:Number(document.getElementById("f-comments").value)||0,sales:Number(document.getElementById("f-sales").value)||0,parentId:document.getElementById("f-parent").value||null,variation:document.getElementById("f-variation").value||"Original",createdAt:now()};
+      const selectedAvatarId=document.getElementById("f-avatar").value||null;
+      const selectedAvatar=(product(pid)?.avatars||[]).find(a=>a.id===selectedAvatarId);
+      const v={id:uid("v"),productId:pid,title:document.getElementById("f-title").value||"Creativo publicado",conceptId:document.getElementById("f-concept").value||null,avatarId:selectedAvatarId,avatarName:selectedAvatar?.name||"",angle:document.getElementById("f-angle").value||"",published:true,views:Number(document.getElementById("f-views").value)||0,comments:Number(document.getElementById("f-comments").value)||0,sales:Number(document.getElementById("f-sales").value)||0,parentId:document.getElementById("f-parent").value||null,variation:document.getElementById("f-variation").value||"Original",createdAt:now()};
       state.videos.unshift(v); if(t.dataset.jobId){const j=state.jobs.find(x=>x.id===t.dataset.jobId);if(j)j.publishedVideoId=v.id;}
       recalcProduct(pid);save();closeModal();render();toast("Creativo registrado como publicado");
     }
