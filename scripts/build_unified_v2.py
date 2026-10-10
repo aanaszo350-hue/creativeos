@@ -23,10 +23,14 @@ if meta not in s:
 
 css_link = '<link rel="stylesheet" href="./creativeos-enhancements.css?v=3" />'
 ux_css_link = '<link rel="stylesheet" href="./creativeos-ux-v4.css?v=1" />'
+cloud_js_link = '<script src="./creativeos-cloud.js?v=1"></script>'
 if css_link not in s:
     s = s.replace('</head>', '  ' + css_link + '\n</head>')
 if ux_css_link not in s:
     s = s.replace('</head>', '  ' + ux_css_link + '\n</head>')
+# Load cloud bridge in <head> so it can observe localStorage writes from the main app.
+if cloud_js_link not in s:
+    s = s.replace('</head>', '  ' + cloud_js_link + '\n</head>')
 
 shell = '<div id="conceptEditor"><div class="ce-modal"><div id="ceContent"></div></div></div>'
 js_link = '<script src="./creativeos-enhancements.js?v=3"></script>'
@@ -45,6 +49,7 @@ checks = {
     'assets workspace': 'function assetsPage()' in s,
     'enhancement script': 'creativeos-enhancements.js?v=3' in s,
     'workflow center': 'creativeos-ux-v4.js?v=1' in s,
+    'cloud bridge': 'creativeos-cloud.js?v=1' in s,
     'editable sales angles': 'data-action="add-sales-angle"' in s and 'data-action="edit-sales-angle"' in s,
     'manual tested concepts': 'data-action="add-tested-concept"' in s,
     'delete controls': 'data-action="delete-asset"' in s and 'data-action="delete-avatar"' in s,
@@ -54,4 +59,4 @@ if failed:
     raise SystemExit('Refusing build: ' + ', '.join(failed))
 
 index.write_text(s, encoding='utf-8')
-print('CreativeOS unified-v2 + editable test knowledge built successfully')
+print('CreativeOS unified-v2 + cloud sync + editable test knowledge built successfully')
