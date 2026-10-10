@@ -1,3 +1,1440 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b10"><title>CreativeOS</title><style>html,body,#appframe{margin:0;width:100%;height:100%;min-height:100vh;background:#07090d}#appframe{position:fixed;inset:0;border:0}#loading{position:fixed;inset:0;display:grid;place-items:center;color:#8f99ad;background:#07090d;font:13px Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style><link rel="stylesheet" href="./concept-editor.css?v=3"></head><body><div id="loading">Cargando CreativeOS…</div><iframe id="appframe" title="CreativeOS"></iframe><script>
-(async()=>{try{let s=await (await fetch('./base.html?v=1',{cache:'no-store'})).text();const css="/* Assets workspace \u2014 product \u2192 category \u2192 file */\n.assets-shell{display:grid;grid-template-columns:230px minmax(0,1fr) 300px;gap:14px;align-items:start}\n.assets-side,.assets-context{border:1px solid var(--line);background:linear-gradient(180deg,#10151e,#0c1017);border-radius:16px;padding:14px;position:sticky;top:96px;max-height:calc(100vh - 125px);overflow:auto}\n.assets-side-title{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);margin:4px 5px 9px}\n.assets-nav{display:grid;gap:5px;margin-bottom:16px}\n.assets-nav-btn{width:100%;border:1px solid transparent;background:transparent;color:#a4aec0;border-radius:10px;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;text-align:left;font-size:10px}\n.assets-nav-btn:hover{background:#131924;border-color:#222c3d;color:#fff}\n.assets-nav-btn.active{background:linear-gradient(90deg,rgba(79,124,255,.18),rgba(141,98,255,.08));border-color:rgba(79,124,255,.28);color:#fff}\n.assets-nav-main{display:flex;gap:8px;align-items:center;min-width:0}.assets-nav-main span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.assets-count{font-size:8px;color:#8490a6;border:1px solid #2a3448;background:#0b0f16;border-radius:999px;padding:3px 6px;flex:0 0 auto}\n.assets-center{min-width:0}\n.assets-top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:12px}\n.assets-top h2{font-size:16px;margin:0 0 4px}.assets-top p{margin:0;color:var(--muted);font-size:10px}\n.assets-search{width:100%;border:1px solid var(--line2);background:#0d1119;color:#e9eef8;border-radius:11px;padding:10px 12px;outline:none;margin-bottom:12px}\n.assets-search:focus{border-color:#516baf;box-shadow:0 0 0 3px rgba(79,124,255,.09)}\n.assets-center .asset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}\n.assets-center .asset-preview{height:165px}\n.assets-context h3{font-size:13px;margin:2px 0 12px}\n.assets-context-row{border-top:1px solid var(--line);padding:11px 0}.assets-context-row:first-of-type{border-top:0}\n.assets-context-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted2);margin-bottom:5px}\n.assets-context-value{font-size:10px;color:#d8dfed;line-height:1.45}\n.assets-selected-list{display:grid;gap:6px}.assets-selected-item{border:1px solid #273149;background:#0b0f16;border-radius:9px;padding:7px 8px;font-size:9px;color:#c9d3e6}\n.assets-empty{border:1px dashed #2b3549;border-radius:15px;padding:34px 20px;text-align:center;color:var(--muted);background:#0c1017;grid-column:1/-1}.assets-empty b{display:block;color:#dce3ef;font-size:11px;margin-bottom:5px}.assets-empty span{font-size:9px}\n";const newAssets="  function assetsPage(){\n    const categories=[\n      [\"Producto\",\"Producto\"],[\"Producto en uso\",\"Producto en uso\"],[\"Packaging\",\"Packaging\"],\n      [\"Avatar\",\"Avatar\"],[\"Ropa\",\"Ropa\"],[\"Fondo\",\"Fondo\"],[\"Ambiente\",\"Ambiente\"]\n    ];\n    const activePid=state.ui.assetsProductId || state.context.productId || state.products[0]?.id;\n    const p=product(activePid) || state.products[0];\n    if(!p) return shell(`<div class=\"empty\"><b>Sin productos</b><span>Crea un producto antes de guardar referencias.</span></div>`,\"Assets\");\n    const activeCat=state.ui.assetsCategory || categories[0][0];\n    const query=(state.ui.assetSearch||\"\").trim().toLowerCase();\n    const allAssets=state.products.flatMap(prod=>(prod.assets||[]).map(a=>({...a,productId:prod.id,productName:prod.name})));\n    let shown=(p.assets||[]).filter(a=>a.type===activeCat);\n    if(query){\n      shown=allAssets.filter(a=>[a.name,a.type,a.productName].join(\" \").toLowerCase().includes(query));\n    }\n    const selected=(state.context.assetIds||[]).map(id=>allAssets.find(a=>a.id===id)).filter(Boolean);\n    const assetCards=shown.length?shown.map(a=>{\n      const sel=(state.context.assetIds||[]).includes(a.id);\n      const media=a.src?(a.src.startsWith(\"data:video\")?`<video src=\"${a.src}\" muted></video>`:`<img src=\"${a.src}\" alt=\"\">`):`<div class=\"asset-fallback\">${esc((a.type||\"A\").slice(0,1))}</div>`;\n      return `<div class=\"asset-card\">\n        <div class=\"asset-preview\">${media}</div>\n        <div class=\"asset-check ${sel?'selected':''}\" data-select-asset=\"${a.id}\" data-product-id=\"${a.productId||p.id}\">${sel?'\\u2713':'+'}</div>\n        <div class=\"asset-meta\"><b>${esc(a.name)}</b><span>${query?esc(a.productName)+\" \\u00b7 \":\"\"}${esc(a.type)}</span></div>\n      </div>`;\n    }).join(\"\"):`<div class=\"assets-empty\"><b>${query?'No hay resultados':'Esta categor\\u00eda est\\u00e1 vac\\u00eda'}</b><span>${query?'Prueba otra b\\u00fasqueda.':'A\\u00f1ade la primera referencia de este tipo para '+esc(p.name)+'.'}</span></div>`;\n    return shell(`\n      <div class=\"hero\"><div><div class=\"eyebrow\">Reference library</div><h1>Assets</h1><p>Producto \\u2192 categor\\u00eda \\u2192 archivo. Cada referencia queda ordenada dentro de su producto y puede a\\u00f1adirse al contexto de ChatGPT.</p></div><button class=\"btn primary\" data-action=\"upload-asset\" data-product-id=\"${p.id}\">${icon(\"upload\")} A\\u00f1adir asset</button></div>\n      ${contextStrip()}\n      <div style=\"height:14px\"></div>\n      <div class=\"assets-shell\">\n        <aside class=\"assets-side\">\n          <div class=\"assets-side-title\">Productos</div>\n          <div class=\"assets-nav\">${state.products.map(prod=>`<button class=\"assets-nav-btn ${prod.id===p.id?'active':''}\" data-action=\"assets-pick-product\" data-product-id=\"${prod.id}\"><span class=\"assets-nav-main\"><span>\\u25eb</span><span>${esc(prod.name)}</span></span><span class=\"assets-count\">${(prod.assets||[]).length}</span></button>`).join(\"\")}</div>\n          <div class=\"assets-side-title\">Categor\\u00edas</div>\n          <div class=\"assets-nav\">${categories.map(([key,label])=>`<button class=\"assets-nav-btn ${!query&&key===activeCat?'active':''}\" data-action=\"assets-pick-category\" data-category=\"${esc(key)}\"><span class=\"assets-nav-main\"><span>${key===\"Producto\"?'\\u25c6':key===\"Producto en uso\"?'\\u25c8':key===\"Packaging\"?'\\u25a3':key===\"Avatar\"?'\\u25cf':key===\"Ropa\"?'\\u25c7':key===\"Fondo\"?'\\u25a4':'\\u25a7'}</span><span>${esc(label)}</span></span><span class=\"assets-count\">${(p.assets||[]).filter(a=>a.type===key).length}</span></button>`).join(\"\")}</div>\n        </aside>\n        <section class=\"assets-center\">\n          <input class=\"assets-search\" id=\"assetGlobalSearch\" value=\"${esc(state.ui.assetSearch||\"\")}\" placeholder=\"Buscar asset por nombre, producto o categor\\u00eda...\">\n          <div class=\"assets-top\"><div><h2>${query?'Resultados de b\\u00fasqueda':esc(p.name)+' \\u00b7 '+esc(activeCat)}</h2><p>${shown.length} archivo${shown.length===1?'':'s'}${query?' en toda la biblioteca':' en esta categor\\u00eda'}</p></div><button class=\"btn\" data-action=\"upload-asset\" data-product-id=\"${p.id}\">${icon(\"plus\")} A\\u00f1adir</button></div>\n          <div class=\"asset-grid\">${assetCards}</div>\n        </section>\n        <aside class=\"assets-context\">\n          <h3>Contexto ChatGPT</h3>\n          <div class=\"assets-context-row\"><div class=\"assets-context-label\">Producto</div><div class=\"assets-context-value\">${esc(product(state.context.productId)?.name||p.name)}</div></div>\n          <div class=\"assets-context-row\"><div class=\"assets-context-label\">Concepto</div><div class=\"assets-context-value\">${esc(concept(state.context.conceptId)?.name||\"Ninguno\")}</div></div>\n          <div class=\"assets-context-row\"><div class=\"assets-context-label\">Avatar</div><div class=\"assets-context-value\">${esc(avatarById(state.context.avatarId)?.name||\"Ninguno\")}</div></div>\n          <div class=\"assets-context-row\"><div class=\"assets-context-label\">Assets seleccionados</div><div class=\"assets-selected-list\">${selected.length?selected.map(a=>`<div class=\"assets-selected-item\">${esc(a.name)} \\u00b7 ${esc(a.productName)}</div>`).join(\"\"):`<div class=\"assets-context-value\">Ninguno</div>`}</div></div>\n          <button class=\"btn primary\" style=\"width:100%;margin-top:8px\" data-action=\"copy-context\">Copiar contexto completo</button>\n          <button class=\"btn ghost\" style=\"width:100%;margin-top:7px\" data-action=\"clear-context\">Limpiar selecci\\u00f3n</button>\n        </aside>\n      </div>\n    `,\"Assets\");\n  }\n\n";const bindAdd="    const ags=document.getElementById(\"assetGlobalSearch\");\n    if(ags) ags.addEventListener(\"input\",e=>{state.ui.assetSearch=e.target.value;save();render();setTimeout(()=>{const x=document.getElementById(\"assetGlobalSearch\");if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length);}},0);});\n";const actionAdd="    else if(a===\"assets-pick-product\"){state.ui.assetsProductId=t.dataset.productId;state.ui.assetSearch=\"\";state.context.productId=t.dataset.productId;save();render();}\n    else if(a===\"assets-pick-category\"){state.ui.assetsCategory=t.dataset.category;state.ui.assetSearch=\"\";save();render();}\n";if(!s.includes('/* Assets workspace — product → category → file */'))s=s.replace('.mobile-menu{display:none}\n','.mobile-menu{display:none}\n'+css+'\n');s=s.replace(/  function assetsPage\(\)\{[\s\S]*?\n  function treePage\(\)\{/,newAssets+'  function treePage(){');if(!s.includes('const ags=document.getElementById("assetGlobalSearch")'))s=s.replace('    const tp=document.getElementById("treeProduct");\n',bindAdd+'    const tp=document.getElementById("treeProduct");\n');if(!s.includes('a==="assets-pick-product"'))s=s.replace('    else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);\n',actionAdd+'    else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);\n');const f=document.getElementById('appframe');f.onload=()=>document.getElementById('loading')?.remove();f.srcdoc=s;}catch(e){document.getElementById('loading').textContent='Error cargando CreativeOS · '+e;}})();
-</script><div id="conceptEditor"><div class="ce-modal"><div id="ceContent"></div></div></div><script src="./concept-editor.js?v=3"></script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090b10" />
+  <meta name="creativeos-build" content="unified-v2" />
+  <title>CreativeOS — AI Creative Operating System</title>
+  <style>
+
+:root{
+  --bg:#07090d;
+  --bg2:#0b0e14;
+  --panel:#10141d;
+  --panel2:#141925;
+  --panel3:#191f2c;
+  --line:#232a39;
+  --line2:#2e3850;
+  --text:#f4f7fb;
+  --muted:#8f99ad;
+  --muted2:#657087;
+  --blue:#4f7cff;
+  --blue2:#6aa0ff;
+  --violet:#8d62ff;
+  --green:#35d07f;
+  --yellow:#f2bb4b;
+  --red:#ff6476;
+  --cyan:#46d4ff;
+  --shadow: 0 18px 50px rgba(0,0,0,.36);
+  --radius:18px;
+  --radius-sm:12px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(1000px 700px at 70% -20%, rgba(79,124,255,.15), transparent 58%),
+  radial-gradient(800px 600px at 10% 0%, rgba(141,98,255,.11), transparent 50%),
+  var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit}
+button{color:inherit}
+a{color:inherit}
+.app-shell{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}
+.sidebar{
+  position:sticky;top:0;height:100vh;border-right:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(13,16,23,.96),rgba(7,9,13,.98));
+  padding:22px 16px;display:flex;flex-direction:column;z-index:20
+}
+.brand{display:flex;align-items:center;gap:12px;padding:5px 8px 24px}
+.brand-mark{
+  width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 0 32px rgba(79,124,255,.28);
+  position:relative;overflow:hidden
+}
+.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:#fff;border-radius:9px}
+.brand-mark:before{width:17px;height:6px;transform:rotate(45deg)}
+.brand-mark:after{width:17px;height:6px;transform:rotate(-45deg)}
+.brand-title{font-weight:800;letter-spacing:-.03em;font-size:18px}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.nav-group-title{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);padding:12px 11px 8px}
+.nav{display:grid;gap:4px}
+.nav-btn{
+  width:100%;border:0;background:transparent;text-align:left;display:flex;align-items:center;gap:11px;
+  padding:10px 11px;border-radius:11px;color:#aab3c3;cursor:pointer;transition:.15s ease
+}
+.nav-btn:hover{background:#121722;color:#fff}
+.nav-btn.active{background:linear-gradient(90deg,rgba(79,124,255,.18),rgba(141,98,255,.10));color:#fff;border:1px solid rgba(100,137,255,.2)}
+.nav-ico{width:20px;height:20px;display:grid;place-items:center;color:#8490a6}
+.nav-btn.active .nav-ico{color:#83a2ff}
+.sidebar-footer{margin-top:auto;display:grid;gap:10px}
+.connection-card{border:1px solid var(--line);background:#0d1119;border-radius:14px;padding:12px}
+.connection-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dot{width:8px;height:8px;border-radius:99px;background:var(--yellow);box-shadow:0 0 0 4px rgba(242,187,75,.08)}
+.dot.green{background:var(--green);box-shadow:0 0 0 4px rgba(53,208,127,.08)}
+.dot.red{background:var(--red)}
+.connection-label{display:flex;align-items:center;gap:9px;font-size:12px;color:#c4cada}
+.connection-note{font-size:10px;color:var(--muted2);margin-top:7px;line-height:1.35}
+.main{min-width:0}
+.topbar{
+  height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:sticky;top:0;background:rgba(7,9,13,.83);backdrop-filter:blur(18px);z-index:15
+}
+.top-left{display:flex;align-items:center;gap:12px;min-width:0}
+.breadcrumb{color:var(--muted);font-size:12px;white-space:nowrap}
+.page-title{font-size:17px;font-weight:700;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-actions{display:flex;gap:9px;align-items:center}
+.btn{
+  border:1px solid var(--line2);background:#111620;border-radius:11px;padding:9px 13px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:650;font-size:12px;transition:.15s ease
+}
+.btn:hover{transform:translateY(-1px);border-color:#3c4865;background:#151b28}
+.btn.primary{border-color:transparent;background:linear-gradient(135deg,var(--blue),#7359ff);box-shadow:0 10px 28px rgba(79,124,255,.19)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.green{border-color:rgba(53,208,127,.25);background:rgba(53,208,127,.12);color:#a6f1c8}
+.btn.danger{border-color:rgba(255,100,118,.24);background:rgba(255,100,118,.09);color:#ffadb7}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 10px;border-radius:9px;font-size:11px}
+.btn.icon{width:38px;height:38px;padding:0}
+.content{padding:28px;max-width:1600px;margin:0 auto}
+.hero{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:24px
+}
+.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#7e8aa0;margin-bottom:9px}
+.hero h1{font-size:34px;letter-spacing:-.05em;margin:0 0 8px;line-height:1.03}
+.hero p{margin:0;color:var(--muted);font-size:13px;max-width:700px;line-height:1.55}
+.hero-stats{display:flex;gap:9px;flex-wrap:wrap}
+.stat-chip{border:1px solid var(--line);background:#0d1119;border-radius:12px;padding:9px 11px;min-width:108px}
+.stat-chip b{display:block;font-size:16px}
+.stat-chip span{font-size:10px;color:var(--muted)}
+.grid{display:grid;gap:16px}
+.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{
+  border:1px solid var(--line);background:linear-gradient(180deg,rgba(17,21,30,.95),rgba(13,16,23,.96));
+  border-radius:var(--radius);box-shadow:0 8px 28px rgba(0,0,0,.18)
+}
+.card.pad{padding:18px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 12px}
+.section-title h2{font-size:14px;margin:0;letter-spacing:-.015em}
+.section-title p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.product-card{overflow:hidden;position:relative;min-height:310px;cursor:pointer;transition:.18s ease}
+.product-card:hover{transform:translateY(-3px);border-color:#35425f;box-shadow:var(--shadow)}
+.product-visual{
+  height:112px;position:relative;display:flex;align-items:center;padding:18px;overflow:hidden;border-bottom:1px solid var(--line)
+}
+.product-visual:after{
+  content:"";position:absolute;inset:auto -40px -80px auto;width:180px;height:180px;border-radius:99px;
+  background:radial-gradient(circle,rgba(255,255,255,.14),transparent 67%)
+}
+.visual-paw{background:
+  radial-gradient(circle at 80% 25%,rgba(79,124,255,.35),transparent 36%),
+  linear-gradient(135deg,#101931,#0e1420 58%,#141525)}
+.visual-baby{background:
+  radial-gradient(circle at 75% 30%,rgba(255,186,112,.22),transparent 36%),
+  linear-gradient(135deg,#242018,#171612 58%,#1d1718)}
+.visual-run{background:
+  radial-gradient(circle at 80% 22%,rgba(53,208,127,.22),transparent 36%),
+  linear-gradient(135deg,#10251d,#101818 58%,#111b1b)}
+.product-monogram{font-size:46px;font-weight:900;letter-spacing:-.08em;color:rgba(255,255,255,.88);position:relative;z-index:1}
+.product-status{position:absolute;right:14px;top:14px;z-index:2}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:rgba(9,12,18,.74);
+  border-radius:999px;padding:5px 8px;font-size:9px;font-weight:750;letter-spacing:.02em
+}
+.badge.green{color:#94f0bb;border-color:rgba(53,208,127,.3);background:rgba(28,76,53,.35)}
+.badge.yellow{color:#f5ce7d;border-color:rgba(242,187,75,.26);background:rgba(86,60,12,.28)}
+.badge.red{color:#ffa2ae;border-color:rgba(255,100,118,.26);background:rgba(92,24,35,.28)}
+.badge.blue{color:#a9c0ff;border-color:rgba(79,124,255,.3);background:rgba(40,58,111,.28)}
+.product-body{padding:16px}
+.product-name-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.product-name{font-size:16px;font-weight:800;letter-spacing:-.025em}
+.product-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.day-ring{
+  min-width:44px;height:44px;border-radius:99px;border:3px solid rgba(79,124,255,.3);display:grid;place-items:center;
+  font-size:10px;line-height:1.1;text-align:center;color:#b9c8ff;background:#0b101b
+}
+.day-ring b{display:block;font-size:13px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:15px}
+.metric{padding:9px;background:#0b0f16;border:1px solid #1c2331;border-radius:11px;min-width:0}
+.metric b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric span{font-size:9px;color:var(--muted2)}
+.coverage{margin-top:13px}
+.cover-row{display:grid;grid-template-columns:72px 1fr 24px;align-items:center;gap:8px;margin-top:7px}
+.cover-row span{font-size:9px;color:var(--muted)}
+.track{height:5px;background:#202635;border-radius:99px;overflow:hidden}
+.fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--violet))}
+.cover-row b{font-size:9px;text-align:right;color:#a8b2c5}
+.product-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.signal{font-size:10px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.mini-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow)}
+.mini-dot.green{background:var(--green)}
+.mini-dot.red{background:var(--red)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:16px 17px;border-bottom:1px solid var(--line)}
+.panel-head h3{font-size:13px;margin:0}
+.panel-head p{font-size:10px;margin:3px 0 0;color:var(--muted)}
+.attention-list{display:grid}
+.attention-item{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid #1d2330}
+.attention-item:last-child{border-bottom:0}
+.thumb{
+  width:54px;height:54px;border-radius:12px;border:1px solid #293248;background:
+  linear-gradient(145deg,#263249,#11151f 65%);position:relative;overflow:hidden;flex:0 0 auto
+}
+.thumb:before{content:"";position:absolute;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.12);left:14px;top:9px}
+.thumb:after{content:"";position:absolute;width:34px;height:18px;border-radius:16px 16px 6px 6px;background:rgba(255,255,255,.1);left:9px;bottom:7px}
+.attention-copy{min-width:0;flex:1}
+.attention-copy b{display:block;font-size:12px}
+.attention-copy span{display:block;font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.context-bar{
+  border:1px solid rgba(79,124,255,.25);background:
+  linear-gradient(90deg,rgba(79,124,255,.08),rgba(141,98,255,.06)),#0c111a;
+  border-radius:16px;padding:14px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap
+}
+.context-title{font-size:11px;font-weight:800;margin-right:4px;display:flex;align-items:center;gap:8px}
+.context-pill{
+  border:1px solid #2b3650;background:#111827;border-radius:999px;padding:7px 9px;font-size:10px;color:#cbd5ea;
+  display:flex;gap:7px;align-items:center
+}
+.context-pill .x{color:#758198;cursor:pointer;font-weight:900}
+.context-empty{font-size:10px;color:var(--muted)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:15px}
+.search{
+  border:1px solid var(--line2);background:#0d1119;color:#e9eef8;border-radius:11px;padding:10px 12px;min-width:240px;outline:none
+}
+.search:focus{border-color:#516baf;box-shadow:0 0 0 3px rgba(79,124,255,.09)}
+.select{
+  border:1px solid var(--line2);background:#0d1119;color:#dfe6f4;border-radius:11px;padding:10px 12px;outline:none
+}
+.concept-card{padding:0;overflow:hidden;transition:.16s ease}
+.concept-card:hover{border-color:#35425e;transform:translateY(-2px)}
+.concept-preview{
+  height:160px;background:
+  linear-gradient(120deg,rgba(79,124,255,.16),rgba(141,98,255,.08)),
+  linear-gradient(145deg,#1c2434,#0e121a);position:relative;overflow:hidden
+}
+.concept-preview .scene{position:absolute;inset:0;display:flex;align-items:flex-end;padding:16px}
+.scene-figure{width:42px;height:88px;background:linear-gradient(180deg,#53617d,#253047);border-radius:20px 20px 12px 12px;opacity:.65}
+.scene-figure.small{height:68px;margin-left:20px;opacity:.4}
+.scene-card{margin-left:auto;width:90px;height:62px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.06)}
+.concept-body{padding:15px}
+.concept-top{display:flex;justify-content:space-between;gap:10px}
+.concept-name{font-size:14px;font-weight:800;letter-spacing:-.02em}
+.concept-desc{font-size:10px;color:var(--muted);line-height:1.45;margin:8px 0 12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:9px;border:1px solid #2a3244;background:#0d1118;color:#9ba7bc;border-radius:999px;padding:5px 7px}
+.chip.blue{border-color:rgba(79,124,255,.28);color:#aebfff;background:rgba(79,124,255,.08)}
+.chip.green{border-color:rgba(53,208,127,.25);color:#94eebb;background:rgba(53,208,127,.07)}
+.concept-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}
+.concept-stat{background:#0c1017;border:1px solid #1e2635;border-radius:10px;padding:8px}
+.concept-stat b{font-size:11px;display:block}
+.concept-stat span{font-size:8px;color:var(--muted2)}
+.card-actions{display:flex;gap:7px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding:0 3px;margin-bottom:18px;overflow:auto}
+.tab{
+  border:0;background:transparent;color:#8f99ac;padding:12px 12px 11px;border-bottom:2px solid transparent;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap
+}
+.tab.active{color:#fff;border-color:var(--blue)}
+.workspace-head{
+  border:1px solid var(--line);border-radius:18px;background:
+  linear-gradient(135deg,rgba(79,124,255,.10),transparent 32%),
+  #0f131c;padding:18px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px
+}
+.workspace-product{display:flex;gap:14px;align-items:center}
+.workspace-logo{width:58px;height:58px;border-radius:15px;display:grid;place-items:center;font-size:23px;font-weight:900;background:linear-gradient(135deg,#233258,#161b28);border:1px solid #31405e}
+.workspace-copy h1{font-size:22px;margin:0 0 3px;letter-spacing:-.035em}
+.workspace-copy p{font-size:10px;color:var(--muted);margin:0}
+.workspace-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.kpi{padding:14px;background:#0f141d;border:1px solid var(--line);border-radius:14px}
+.kpi b{font-size:17px;display:block}
+.kpi span{font-size:9px;color:var(--muted);margin-top:4px;display:block}
+.test-quality{padding:16px}
+.quality-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.quality-score{font-size:24px;font-weight:900;letter-spacing:-.05em}
+.quality-caption{font-size:9px;color:var(--muted)}
+.quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+.quality-box{background:#0c1017;border:1px solid #202838;border-radius:12px;padding:10px}
+.quality-box .bar{height:6px;background:#1f2633;border-radius:99px;margin:8px 0 6px;overflow:hidden}
+.quality-box .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));border-radius:99px}
+.quality-box b{font-size:11px}
+.quality-box span{font-size:9px;color:var(--muted)}
+.brief{width:100%;min-height:145px;background:#0c1017;color:#dfe5f1;border:1px solid #252d3e;border-radius:13px;padding:13px;resize:vertical;outline:none;line-height:1.5;font-size:11px}
+.brief:focus{border-color:#4a66af}
+.asset-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.asset-card{border:1px solid var(--line);background:#0e1219;border-radius:14px;overflow:hidden;position:relative}
+.asset-preview{height:128px;background:linear-gradient(145deg,#222a3b,#10141c);display:grid;place-items:center;overflow:hidden}
+.asset-preview img,.asset-preview video{width:100%;height:100%;object-fit:cover}
+.asset-fallback{font-size:30px;font-weight:900;color:#6f7c93}
+.asset-meta{padding:10px}
+.asset-meta b{font-size:10px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-meta span{font-size:8px;color:var(--muted);display:block;margin-top:3px}
+.asset-check{position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:99px;border:1px solid #3c465b;background:rgba(7,9,13,.82);display:grid;place-items:center;cursor:pointer;font-size:11px}
+.asset-check.selected{background:var(--blue);border-color:var(--blue)}
+.avatar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.avatar-card{padding:13px}
+.avatar-top{display:flex;gap:11px}
+.avatar-face{width:52px;height:52px;border-radius:15px;background:linear-gradient(145deg,#37435b,#171d28);position:relative;overflow:hidden;flex:0 0 auto}
+.avatar-face:before{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#73819a;left:16px;top:8px}
+.avatar-face:after{content:"";position:absolute;width:34px;height:22px;border-radius:20px 20px 8px 8px;background:#55627a;left:9px;bottom:5px}
+.avatar-info{min-width:0}
+.avatar-info b{font-size:12px;display:block}
+.avatar-info span{font-size:9px;color:var(--muted);display:block;margin-top:3px}
+.avatar-meta{display:grid;gap:6px;margin-top:11px}
+.meta-row{display:flex;justify-content:space-between;gap:8px;font-size:9px}
+.meta-row span:first-child{color:var(--muted)}
+.meta-row span:last-child{color:#ccd4e4;text-align:right}
+.table-wrap{border:1px solid var(--line);border-radius:15px;overflow:auto;background:#0d1118}
+table{border-collapse:collapse;width:100%;min-width:880px}
+th{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#6f7b90;background:#10151e;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);position:sticky;top:0}
+td{font-size:10px;padding:11px 12px;border-bottom:1px solid #1c2330;color:#c7cfdd}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#111722}
+.inline-input{background:#0a0e14;border:1px solid #273043;color:#e7edf8;border-radius:8px;padding:6px 7px;width:86px}
+.switch{position:relative;width:34px;height:19px;border-radius:999px;background:#293043;cursor:pointer;display:inline-block;vertical-align:middle}
+.switch:after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;background:#8b96a8;top:3px;left:3px;transition:.15s}
+.switch.on{background:rgba(53,208,127,.28)}
+.switch.on:after{left:18px;background:#75e5aa}
+.tree-shell{padding:20px;overflow:auto;min-height:520px}
+.tree{display:flex;align-items:flex-start;gap:58px;min-width:1100px;padding:18px}
+.tree-col{display:grid;gap:18px;position:relative}
+.tree-col:not(:first-child):before{content:"";position:absolute;width:42px;height:1px;background:#303a50;left:-50px;top:34px}
+.tree-node{width:210px;border:1px solid #2a3449;border-radius:14px;background:#111722;padding:12px;position:relative}
+.tree-node.root{border-color:#4d65a6;background:linear-gradient(135deg,rgba(79,124,255,.12),#111722)}
+.tree-node.best{border-color:rgba(53,208,127,.46);box-shadow:0 0 0 1px rgba(53,208,127,.08)}
+.tree-node:before{content:"";position:absolute;left:-18px;top:33px;width:18px;height:1px;background:#303a50}
+.tree-col:first-child .tree-node:before{display:none}
+.node-title{font-size:11px;font-weight:800}
+.node-sub{font-size:9px;color:var(--muted);margin-top:4px}
+.node-metrics{display:flex;gap:8px;margin-top:9px;font-size:9px;color:#b6c0d2}
+.node-tag{display:inline-flex;margin-top:8px;font-size:8px;border-radius:999px;padding:4px 6px;background:#0b0f16;border:1px solid #293245;color:#91a0b9}
+.job-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.job-card{padding:14px;display:grid;grid-template-columns:118px 1fr;gap:14px}
+.job-preview{height:155px;border-radius:13px;background:
+  linear-gradient(160deg,rgba(79,124,255,.16),transparent 42%),
+  linear-gradient(145deg,#242d40,#0e1219);position:relative;overflow:hidden;border:1px solid #283147}
+.job-preview .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:39px;height:39px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);display:grid;place-items:center}
+.job-copy h3{font-size:13px;margin:2px 0 4px}
+.job-copy p{font-size:9px;color:var(--muted);margin:0 0 9px;line-height:1.45}
+.job-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.job-actions{display:flex;gap:7px;flex-wrap:wrap}
+.progress{height:7px;border-radius:99px;background:#202636;overflow:hidden;margin:10px 0}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--violet))}
+.review-note{font-size:9px;color:#c9d3e6;background:#0c1017;border:1px solid #20283a;border-radius:10px;padding:8px;margin:9px 0}
+.empty{
+  border:1px dashed #2a3346;border-radius:16px;padding:28px;text-align:center;color:var(--muted);
+  background:linear-gradient(180deg,rgba(19,24,34,.5),rgba(10,13,18,.45))
+}
+.empty b{display:block;color:#dce3ef;font-size:12px;margin-bottom:5px}
+.empty span{font-size:10px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:grid;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:9px;color:#93a0b5;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field textarea,.field select{
+  width:100%;background:#0c1017;border:1px solid #273043;border-radius:10px;padding:10px;color:#e7edf8;outline:none;font-size:11px
+}
+.field textarea{min-height:90px;resize:vertical}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#4c67b0}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,4,8,.72);backdrop-filter:blur(8px);display:grid;place-items:center;z-index:100;padding:20px}
+.modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#0e1219;border:1px solid #2a3448;border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;padding:18px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-size:15px;margin:0}
+.modal-head p{font-size:10px;color:var(--muted);margin:4px 0 0}
+.modal-body{padding:18px}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.close{border:0;background:transparent;color:#8995aa;font-size:18px;cursor:pointer}
+.feedback-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.feedback-chip{border:1px solid #293246;background:#0c1017;border-radius:999px;padding:7px 9px;font-size:9px;cursor:pointer;color:#aeb9cb}
+.feedback-chip.active{border-color:#536db5;background:rgba(79,124,255,.12);color:#d7e1ff}
+.toast-wrap{position:fixed;right:20px;bottom:20px;display:grid;gap:9px;z-index:200}
+.toast{background:#121823;border:1px solid #2b3549;border-radius:12px;padding:11px 13px;box-shadow:var(--shadow);font-size:10px;color:#dce4f2;min-width:230px}
+.split{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.7fr);gap:16px}
+.side-panel{position:sticky;top:96px;align-self:start}
+.chat-context-card{padding:15px}
+.chat-context-card h3{font-size:13px;margin:0 0 4px}
+.chat-context-card p{font-size:9px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+.context-list{display:grid;gap:7px}
+.context-row{border:1px solid #222b3d;background:#0b0f16;border-radius:10px;padding:9px}
+.context-row span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#6f7b91;margin-bottom:4px}
+.context-row b{font-size:10px;display:block}
+.note-box{border:1px solid #232c3d;background:#0b0f16;border-radius:12px;padding:11px;margin-top:10px}
+.note-box textarea{width:100%;min-height:72px;background:transparent;border:0;color:#dce4f2;outline:none;resize:vertical;font-size:10px;line-height:1.45}
+.status-line{display:flex;gap:8px;align-items:center;font-size:9px;color:var(--muted)}
+.model-preset{border:1px solid #253044;background:#0d121b;border-radius:12px;padding:11px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.model-preset b{font-size:10px}
+.model-preset span{font-size:8px;color:var(--muted);display:block;margin-top:2px}
+.lock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.lock-item{border:1px solid #253044;background:#0b0f16;border-radius:10px;padding:9px;display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:9px}
+.mobile-menu{display:none}
+
+/* Assets workspace — product → category → file */
+.assets-shell{display:grid;grid-template-columns:230px minmax(0,1fr) 300px;gap:14px;align-items:start}
+.assets-side,.assets-context{border:1px solid var(--line);background:linear-gradient(180deg,#10151e,#0c1017);border-radius:16px;padding:14px;position:sticky;top:96px;max-height:calc(100vh - 125px);overflow:auto}
+.assets-side-title{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);margin:4px 5px 9px}
+.assets-nav{display:grid;gap:5px;margin-bottom:16px}
+.assets-nav-btn{width:100%;border:1px solid transparent;background:transparent;color:#a4aec0;border-radius:10px;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;text-align:left;font-size:10px}
+.assets-nav-btn:hover{background:#131924;border-color:#222c3d;color:#fff}
+.assets-nav-btn.active{background:linear-gradient(90deg,rgba(79,124,255,.18),rgba(141,98,255,.08));border-color:rgba(79,124,255,.28);color:#fff}
+.assets-nav-main{display:flex;gap:8px;align-items:center;min-width:0}.assets-nav-main span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.assets-count{font-size:8px;color:#8490a6;border:1px solid #2a3448;background:#0b0f16;border-radius:999px;padding:3px 6px;flex:0 0 auto}
+.assets-center{min-width:0}
+.assets-top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:12px}
+.assets-top h2{font-size:16px;margin:0 0 4px}.assets-top p{margin:0;color:var(--muted);font-size:10px}
+.assets-search{width:100%;border:1px solid var(--line2);background:#0d1119;color:#e9eef8;border-radius:11px;padding:10px 12px;outline:none;margin-bottom:12px}
+.assets-search:focus{border-color:#516baf;box-shadow:0 0 0 3px rgba(79,124,255,.09)}
+.assets-center .asset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.assets-center .asset-preview{height:165px}
+.assets-context h3{font-size:13px;margin:2px 0 12px}
+.assets-context-row{border-top:1px solid var(--line);padding:11px 0}.assets-context-row:first-of-type{border-top:0}
+.assets-context-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted2);margin-bottom:5px}
+.assets-context-value{font-size:10px;color:#d8dfed;line-height:1.45}
+.assets-selected-list{display:grid;gap:6px}.assets-selected-item{border:1px solid #273149;background:#0b0f16;border-radius:9px;padding:7px 8px;font-size:9px;color:#c9d3e6}
+.assets-empty{border:1px dashed #2b3549;border-radius:15px;padding:34px 20px;text-align:center;color:var(--muted);background:#0c1017;grid-column:1/-1}.assets-empty b{display:block;color:#dce3ef;font-size:11px;margin-bottom:5px}.assets-empty span{font-size:9px}
+@media(max-width:1200px){.assets-shell{grid-template-columns:210px minmax(0,1fr)}.assets-context{grid-column:1/-1;position:static;max-height:none}.assets-center .asset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){.assets-shell{grid-template-columns:1fr}.assets-side,.assets-context{position:static;max-height:none}.assets-center .asset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.assets-center .asset-grid{grid-template-columns:1fr}}
+
+@media(max-width:1200px){
+  .grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .asset-grid{grid-template-columns:repeat(3,1fr)}
+  .avatar-grid{grid-template-columns:repeat(3,1fr)}
+  .split{grid-template-columns:1fr}
+  .side-panel{position:static}
+}
+@media(max-width:850px){
+  .app-shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:-270px;width:250px;transition:.2s;box-shadow:var(--shadow)}
+  .sidebar.open{left:0}
+  .mobile-menu{display:inline-flex}
+  .topbar{padding:0 15px}
+  .content{padding:18px 14px}
+  .hero{align-items:flex-start;flex-direction:column}
+  .hero h1{font-size:29px}
+  .grid.cols-3,.grid.cols-2,.grid.cols-4{grid-template-columns:1fr}
+  .job-grid{grid-template-columns:1fr}
+  .asset-grid{grid-template-columns:repeat(2,1fr)}
+  .avatar-grid{grid-template-columns:repeat(2,1fr)}
+  .workspace-head{flex-direction:column}
+  .workspace-actions{justify-content:flex-start}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .quality-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+}
+@media(max-width:520px){
+  .asset-grid,.avatar-grid{grid-template-columns:1fr}
+  .job-card{grid-template-columns:1fr}
+  .job-preview{height:190px}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .top-actions .hide-mobile{display:none}
+}
+
+</style>
+  <link rel="stylesheet" href="./creativeos-enhancements.css?v=3" />
+</head>
+<body>
+  <div id="app"></div>
+  <input id="hiddenFileInput" type="file" accept="image/*,video/*" multiple hidden />
+  <script>
+
+(() => {
+  const STORAGE_KEY = "creativeos_local_v3";
+  const now = () => new Date().toISOString();
+
+  const seed = {
+    version: 3,
+    ui: { route: "home", productTab: "overview", openProductId: null, conceptFilter: "Todos", search: "", sidebarOpen:false },
+    settings: {
+      higgsfieldConnected: false,
+      chatgptConnected: false,
+      remixDefault: "Wan 3.0 · 720p",
+      createDefault: "Seedance 2.5 · 480p · 9:16",
+      upscale: "ByteDance · 1080p · 60 FPS · Common · Standard"
+    },
+    context: {
+      productId: null, conceptId: null, videoId: null, avatarId: null, assetIds: [],
+      mode: null, instruction: "",
+      locks: {camera:true, actions:true, product:false, background:false}
+    },
+    products: [
+      {
+        id:"pawshield", name:"PawShield", label:"Orejeras para perros", status:"Testing", day:5, testMax:7,
+        published:8, conceptsTested:4, avatarsTested:2, anglesTested:3, views:32700, comments:284, sales:6, bestViews:21600,
+        accent:"paw", brief:"Problema principal: estrés con fuegos artificiales, tormentas y ruidos fuertes. Producto acolchado que cubre orejas y cabeza. No prometer eliminación total del ruido. Contenido orgánico: miedo → colocación → calma/sueño. Priorizar escenas domésticas naturales y producto protagonista.",
+        assets:[
+          {id:"pa1",name:"Producto frontal",type:"Producto",src:null},
+          {id:"pa2",name:"Producto puesto",type:"Producto en uso",src:null},
+          {id:"pa3",name:"Packaging",type:"Packaging",src:null},
+          {id:"pa4",name:"Sofá lluvia",type:"Fondo",src:null},
+          {id:"pa5",name:"Salón natural",type:"Ambiente",src:null}
+        ],
+        avatars:[
+          {id:"avp1",name:"Dueña 28",age:"28",segment:"Dueños de perros sensibles al ruido",angle:"Calma durante fuegos y tormentas",role:"Propietaria / demostración"},
+          {id:"avp2",name:"Dueño 42",age:"42",segment:"Familias con perro nervioso",angle:"Dormir tranquilo en casa",role:"Propietario / autoridad cotidiana"}
+        ]
+      },
+      {
+        id:"babycalm", name:"BabyCalm", label:"Portabebés sling", status:"Testing", day:3, testMax:7,
+        published:4, conceptsTested:3, avatarsTested:2, anglesTested:2, views:12300, comments:91, sales:3, bestViews:8400,
+        accent:"baby", brief:"Portabebés gris, bebé pequeño y recogido, buen soporte de espalda y piernas, hebilla visible. Escenas validadas: supermercado, aeropuerto, terraza con amiga. Mostrar comodidad y manos libres sin exagerar seguridad médica.",
+        assets:[
+          {id:"ba1",name:"Sling gris",type:"Producto",src:null},
+          {id:"ba2",name:"Producto puesto",type:"Producto en uso",src:null},
+          {id:"ba3",name:"Supermercado",type:"Ambiente",src:null},
+          {id:"ba4",name:"Aeropuerto",type:"Ambiente",src:null}
+        ],
+        avatars:[
+          {id:"avb1",name:"Madre 27",age:"27",segment:"Madres con bebé pequeño",angle:"Manos libres fuera de casa",role:"Madre / uso cotidiano"},
+          {id:"avb2",name:"Madre viajera 31",age:"31",segment:"Padres que viajan",angle:"Moverse por aeropuerto con bebé",role:"Madre / viaje"}
+        ]
+      },
+      {
+        id:"strideshield", name:"StrideShield", label:"Protectores de dedos running", status:"Testing", day:6, testMax:7,
+        published:13, conceptsTested:5, avatarsTested:3, anglesTested:4, views:59800, comments:421, sales:11, bestViews:27400,
+        accent:"run", brief:"Protectores de dedos para running, pista y trail. Enfoques: molestias/rozaduras, protección en carrera, regalo para corredor. Evitar claims médicos de curación. Hook visual guardado: dos runners en tienda deportiva, botella de agua accidental y paneo rápido.",
+        assets:[
+          {id:"sa1",name:"Protector frontal",type:"Producto",src:null},
+          {id:"sa2",name:"Protector puesto",type:"Producto en uso",src:null},
+          {id:"sa3",name:"Pista atletismo",type:"Ambiente",src:null},
+          {id:"sa4",name:"Tienda running",type:"Ambiente",src:null}
+        ],
+        avatars:[
+          {id:"avs1",name:"Runner hombre 24",age:"24",segment:"Runners urbanos",angle:"Proteger dedos durante carrera",role:"Runner / demostración"},
+          {id:"avs2",name:"Runner mujer 26",age:"26",segment:"Corredores de pista",angle:"Rozaduras y comodidad",role:"Runner / prueba"},
+          {id:"avs3",name:"Trail runner 34",age:"34",segment:"Trail running",angle:"Protección en terreno exigente",role:"Trail / outdoor"}
+        ]
+      }
+    ],
+    concepts:[
+      {id:"c1",name:"Desmayo en tienda",category:"Global",desc:"Hook social: dos personas reaccionan de forma exagerada a algo fuera de plano; paneo rápido para revelar producto/acción.",source:"Vídeo viral guardado",uses:6,bestViews:74000,avgViews:21800,tags:["Hook social","Paneo","Reveal"]},
+      {id:"c2",name:"Bolsa se rompe",category:"Pets",desc:"Objeto cotidiano falla con un sonido fuerte, activa el problema y conduce directamente a la demostración del producto.",source:"Referencia botas perro",uses:4,bestViews:21600,avgViews:11200,tags:["Problema→solución","SFX","Demostración"]},
+      {id:"c3",name:"Regalo durante actividad",category:"Gift",desc:"Persona concentrada en una actividad cotidiana recibe el producto como sorpresa. El regalo interrumpe la rutina de forma orgánica.",source:"Concepto guardado",uses:3,bestViews:15800,avgViews:9700,tags:["Regalo","UGC","Interrupción"]},
+      {id:"c4",name:"Problema → colocación → calma",category:"Pets",desc:"Mostrar ansiedad o molestia, colocar el producto claramente y cerrar con una escena de calma/payoff.",source:"PawShield winner",uses:7,bestViews:21600,avgViews:14300,tags:["PAS","Producto en uso","Payoff"]},
+      {id:"c5",name:"Tienda running + botella",category:"Sport",desc:"Dos runners miran sorprendidos; botella lanza agua accidentalmente; reacción cómica y paneo rápido al reveal.",source:"Hook StrideShield",uses:2,bestViews:27400,avgViews:19400,tags:["Comedy","Sport","Reveal"]},
+      {id:"c6",name:"Aeropuerto manos libres",category:"Babies",desc:"Madre con maleta y documentos; el producto resuelve fricción de viaje y mantiene al bebé recogido.",source:"BabyCalm scene",uses:3,bestViews:8400,avgViews:6100,tags:["Travel","Lifestyle","Hands-free"]}
+    ],
+    videos:[
+      {id:"v1",productId:"pawshield",title:"Tormenta sofá V1",conceptId:"c4",avatarId:"avp1",angle:"Calma con tormentas",published:true,views:21600,comments:194,sales:4,parentId:null,variation:"Original winner",createdAt:now()},
+      {id:"v2",productId:"pawshield",title:"Fondo salón V2",conceptId:"c4",avatarId:"avp1",angle:"Calma con tormentas",published:true,views:8100,comments:63,sales:1,parentId:"v1",variation:"Pilar · Fondo",createdAt:now()},
+      {id:"v3",productId:"pawshield",title:"Avatar dueño V3",conceptId:"c4",avatarId:"avp2",angle:"Dormir tranquilo",published:true,views:12400,comments:98,sales:2,parentId:"v1",variation:"Avatar",createdAt:now()},
+      {id:"v4",productId:"strideshield",title:"Tienda running V1",conceptId:"c5",avatarId:"avs1",angle:"Protección running",published:true,views:27400,comments:233,sales:7,parentId:null,variation:"Original winner",createdAt:now()},
+      {id:"v5",productId:"strideshield",title:"Trail avatar V2",conceptId:"c5",avatarId:"avs3",angle:"Trail",published:true,views:16800,comments:118,sales:3,parentId:"v4",variation:"Avatar",createdAt:now()},
+      {id:"v6",productId:"babycalm",title:"Aeropuerto V1",conceptId:"c6",avatarId:"avb2",angle:"Viaje manos libres",published:true,views:8400,comments:61,sales:2,parentId:null,variation:"Original",createdAt:now()}
+    ],
+    jobs:[
+      {id:"j1",productId:"pawshield",mode:"Remix",model:"Wan 3.0 · 720p",status:"review",progress:100,conceptId:"c4",avatarId:"avp1",version:2,title:"Tormenta sofá · ropa distinta",note:"Cambio mínimo de ropa y detalles de fondo. Mantener acciones y cámara.",feedback:"",createdAt:now()},
+      {id:"j2",productId:"strideshield",mode:"Remix",model:"Wan 3.0 · 720p",status:"generating",progress:68,conceptId:"c5",avatarId:"avs3",version:1,title:"Tienda running · trail avatar",note:"Mantener estructura del hook; adaptar avatar a trail.",feedback:"",createdAt:now()},
+      {id:"j3",productId:"babycalm",mode:"Create",model:"Seedance 2.5 · 480p",status:"queued",progress:12,conceptId:"c6",avatarId:"avb1",version:1,title:"Supermercado manos libres",note:"Escena orgánica, bebé pequeño, sling gris, hebilla visible.",feedback:"",createdAt:now()}
+    ]
+  };
+
+  const clone = o => JSON.parse(JSON.stringify(o));
+  let state = load();
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return clone(seed);
+      const saved = JSON.parse(raw);
+      return {...clone(seed), ...saved, ui:{...clone(seed.ui), ...(saved.ui||{})}, context:{...clone(seed.context), ...(saved.context||{})}};
+    }catch(e){ return clone(seed); }
+  }
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
+  function fmt(n){
+    n=Number(n||0);
+    if(n>=1000000) return (n/1000000).toFixed(n>=10000000?0:1).replace(".0","")+"M";
+    if(n>=1000) return (n/1000).toFixed(n>=10000?0:1).replace(".0","")+"K";
+    return String(n);
+  }
+  const esc = s => String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  const product = id => state.products.find(x=>x.id===id);
+  const concept = id => state.concepts.find(x=>x.id===id);
+  const video = id => state.videos.find(x=>x.id===id);
+  function avatarById(id){
+    for(const p of state.products){ const a=(p.avatars||[]).find(x=>x.id===id); if(a) return a; }
+    return null;
+  }
+  function coverageScore(p){
+    const c=Math.min(p.conceptsTested/5,1), a=Math.min(p.avatarsTested/3,1), g=Math.min(p.anglesTested/4,1);
+    return Math.round((c+a+g)/3*100);
+  }
+  function testSignal(p){
+    if(p.bestViews>=20000 || p.sales>=5) return {label:"Señal fuerte",cls:"green"};
+    if(p.bestViews>=5000 || p.sales>0) return {label:"Interesante",cls:""};
+    if(p.day>=7 && coverageScore(p)>=80) return {label:"Descartable",cls:"red"};
+    return {label:"Aún sin señal",cls:""};
+  }
+  function statusBadge(status){
+    const map={Testing:"blue",Winner:"green",Paused:"yellow",Discarded:"red",Preparing:""};
+    return `<span class="badge ${map[status]||""}">${esc(status)}</span>`;
+  }
+  function icon(name){
+    const icons={
+      home:"⌂", products:"◫", concepts:"◇", tree:"⌘", review:"◉", results:"▦", assets:"▧", settings:"⚙",
+      plus:"+", context:"◎", edit:"✎", chevron:"›", upload:"↑", play:"▶", check:"✓", retry:"↻", close:"×"
+    };
+    return icons[name]||"•";
+  }
+  function navItem(route,label,ico){
+    return `<button class="nav-btn ${state.ui.route===route?'active':''}" data-route="${route}">
+      <span class="nav-ico">${icon(ico)}</span><span>${label}</span>
+    </button>`;
+  }
+  function contextItems(){
+    const out=[];
+    if(state.context.productId){ const p=product(state.context.productId); if(p) out.push({type:"Producto",name:p.name,key:"productId"}); }
+    if(state.context.conceptId){ const c=concept(state.context.conceptId); if(c) out.push({type:"Concepto",name:c.name,key:"conceptId"}); }
+    if(state.context.videoId){ const v=video(state.context.videoId); if(v) out.push({type:"Vídeo",name:v.title,key:"videoId"}); }
+    if(state.context.avatarId){ const a=avatarById(state.context.avatarId); if(a) out.push({type:"Avatar",name:a.name,key:"avatarId"}); }
+    for(const aid of state.context.assetIds||[]){
+      let found=null; for(const p of state.products){ found=(p.assets||[]).find(a=>a.id===aid); if(found) break; }
+      if(found) out.push({type:"Asset",name:found.name,key:"asset",assetId:aid});
+    }
+    return out;
+  }
+  function contextStrip(){
+    const items=contextItems();
+    return `<div class="context-bar">
+      <div class="context-title">${icon("context")} Contexto ChatGPT</div>
+      ${items.length?items.map(i=>`<div class="context-pill"><span>${esc(i.type)} · ${esc(i.name)}</span><span class="x" data-context-remove="${i.key}" ${i.assetId?`data-asset-id="${i.assetId}"`:""}>×</span></div>`).join(""):`<div class="context-empty">Selecciona un producto, concepto, vídeo, avatar o asset. Ese será el contexto que el futuro conector enviará a ChatGPT.</div>`}
+      <div style="margin-left:auto;display:flex;gap:7px">
+        ${items.length?`<button class="btn small" data-action="copy-context">Copiar contexto</button><button class="btn small ghost" data-action="clear-context">Limpiar</button>`:""}
+      </div>
+    </div>`;
+  }
+
+  function shell(inner,title,breadcrumb="CreativeOS"){
+    return `<div class="app-shell">
+      <aside class="sidebar ${state.ui.sidebarOpen?'open':''}">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div><div class="brand-title">CreativeOS</div><div class="brand-sub">AI creative operating system</div></div>
+        </div>
+        <div class="nav-group-title">Workspace</div>
+        <div class="nav">
+          ${navItem("home","Inicio","home")}
+          ${navItem("products","Productos","products")}
+          ${navItem("concepts","Conceptos","concepts")}
+          ${navItem("tree","Creative Tree","tree")}
+          ${navItem("review","Revisión & Jobs","review")}
+          ${navItem("results","Resultados","results")}
+          ${navItem("assets","Assets","assets")}
+        </div>
+        <div class="nav-group-title">Sistema</div>
+        <div class="nav">${navItem("settings","Ajustes","settings")}</div>
+        <div class="sidebar-footer">
+          <div class="connection-card">
+            <div class="connection-row"><div class="connection-label"><span class="dot ${state.settings.chatgptConnected?'green':''}"></span>ChatGPT</div><span class="badge">${state.settings.chatgptConnected?'Conectado':'Pendiente'}</span></div>
+            <div class="connection-note">La selección de contexto ya funciona localmente. El conector real se añadirá después.</div>
+          </div>
+          <div class="connection-card">
+            <div class="connection-row"><div class="connection-label"><span class="dot ${state.settings.higgsfieldConnected?'green':''}"></span>Higgsfield</div><span class="badge">${state.settings.higgsfieldConnected?'Conectado':'Pendiente'}</span></div>
+            <div class="connection-note">Wan, Seedance y Upscale quedan como motor externo. Esta web no intenta copiar Higgsfield.</div>
+          </div>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div class="top-left">
+            <button class="btn icon mobile-menu" data-action="toggle-sidebar">☰</button>
+            <div><div class="breadcrumb">${esc(breadcrumb)}</div><div class="page-title">${esc(title)}</div></div>
+          </div>
+          <div class="top-actions">
+            <button class="btn hide-mobile" data-route="review">${icon("review")} ${state.jobs.filter(j=>j.status==="review").length} por revisar</button>
+            <button class="btn primary" data-action="open-context">${icon("context")} Contexto ChatGPT</button>
+          </div>
+        </header>
+        <div class="content">${inner}</div>
+      </main>
+      <div class="toast-wrap" id="toasts"></div>
+      <div id="modalRoot"></div>
+    </div>`;
+  }
+
+  function activeProducts(){ return state.products.slice(0,3); }
+  function productCard(p){
+    const sig=testSignal(p), score=coverageScore(p);
+    return `<div class="card product-card" data-open-product="${p.id}">
+      <div class="product-visual visual-${p.accent}">
+        <div class="product-monogram">${esc(p.name.slice(0,2).toUpperCase())}</div>
+        <div class="product-status">${statusBadge(p.status)}</div>
+      </div>
+      <div class="product-body">
+        <div class="product-name-row">
+          <div><div class="product-name">${esc(p.name)}</div><div class="product-sub">${esc(p.label)}</div></div>
+          <div class="day-ring"><div><b>${p.day}</b>/ ${p.testMax}</div></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><b>${p.published}</b><span>Publicados</span></div>
+          <div class="metric"><b>${fmt(p.bestViews)}</b><span>Mejor vídeo</span></div>
+          <div class="metric"><b>${p.sales}</b><span>Ventas</span></div>
+          <div class="metric"><b>${score}%</b><span>Cobertura</span></div>
+        </div>
+        <div class="coverage">
+          ${cover("Conceptos",p.conceptsTested,5)}
+          ${cover("Avatares",p.avatarsTested,3)}
+          ${cover("Ángulos",p.anglesTested,4)}
+        </div>
+        <div class="product-footer">
+          <div class="signal"><span class="mini-dot ${sig.cls}"></span>${sig.label}</div>
+          <button class="btn small" data-select-product="${p.id}" onclick="event.stopPropagation()">Seleccionar para ChatGPT</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  function cover(label,n,target){
+    const pct=Math.min(n/target*100,100);
+    return `<div class="cover-row"><span>${label}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><b>${n}</b></div>`;
+  }
+
+  function homePage(){
+    const totalPub=activeProducts().reduce((a,p)=>a+p.published,0);
+    const totalSales=activeProducts().reduce((a,p)=>a+p.sales,0);
+    const review=state.jobs.filter(j=>j.status==="review");
+    const weak=activeProducts().filter(p=>p.day>=5 && coverageScore(p)<70);
+    const attention=[
+      ...review.map(j=>({kind:"review",title:j.title,sub:`${product(j.productId)?.name||""} · listo para revisar`,job:j})),
+      ...weak.map(p=>({kind:"coverage",title:`Test incompleto · ${p.name}`,sub:`Día ${p.day}/${p.testMax} · cobertura ${coverageScore(p)}%`,product:p}))
+    ].slice(0,5);
+    return shell(`
+      <div class="hero">
+        <div><div class="eyebrow">Creative intelligence</div><h1>Todo tu sistema creativo,<br>sin convertirlo en otro Higgsfield.</h1>
+        <p>La web organiza productos, conceptos, assets, tests, variantes y resultados. Seleccionas aquí; trabajas con ChatGPT; Higgsfield queda como motor.</p></div>
+        <div class="hero-stats">
+          <div class="stat-chip"><b>3</b><span>Productos activos</span></div>
+          <div class="stat-chip"><b>${totalPub}</b><span>Vídeos publicados</span></div>
+          <div class="stat-chip"><b>${review.length}</b><span>Esperando review</span></div>
+          <div class="stat-chip"><b>${totalSales}</b><span>Ventas registradas</span></div>
+        </div>
+      </div>
+      ${contextStrip()}
+      <div class="section-title"><div><h2>Productos activos</h2><p>Máximo 3 en el test actual.</p></div><button class="btn" data-action="add-product">${icon("plus")} Añadir producto</button></div>
+      <div class="grid cols-3">${activeProducts().map(productCard).join("")}</div>
+      <div class="grid cols-2" style="margin-top:16px">
+        <div class="card">
+          <div class="panel-head"><div><h3>Necesita tu atención</h3><p>Review, tests estrechos o decisiones pendientes.</p></div><button class="btn small" data-route="review">Ver cola</button></div>
+          <div class="attention-list">
+            ${attention.length?attention.map(x=>`<div class="attention-item">
+              <div class="thumb"></div>
+              <div class="attention-copy"><b>${esc(x.title)}</b><span>${esc(x.sub)}</span></div>
+              ${x.kind==="review"?`<button class="btn small primary" data-review-job="${x.job.id}">Revisar</button>`:`<button class="btn small" data-open-product="${x.product.id}">Abrir</button>`}
+            </div>`).join(""):`<div class="empty" style="margin:16px"><b>Todo limpio</b><span>No hay nada urgente.</span></div>`}
+          </div>
+        </div>
+        <div class="card pad">
+          <div class="panel-head" style="padding:0 0 14px;border:0"><div><h3>Cómo trabajará ChatGPT</h3><p>La web prepara contexto; el chat ejecuta el trabajo.</p></div></div>
+          <div class="model-preset"><div><b>REMIX</b><span>${esc(state.settings.remixDefault)}</span></div><span class="badge blue">Default</span></div>
+          <div class="model-preset" style="margin-top:8px"><div><b>CREATE</b><span>${esc(state.settings.createDefault)}</span></div><span class="badge">Seedance</span></div>
+          <div class="model-preset" style="margin-top:8px"><div><b>APPROVE → UPSCALE</b><span>${esc(state.settings.upscale)}</span></div><span class="badge green">Preset fijo</span></div>
+          <div class="note-box"><textarea id="homeContextInstruction" placeholder="Nota rápida para el contexto de ChatGPT...">${esc(state.context.instruction||"")}</textarea></div>
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn primary" data-action="prepare-chatgpt">Preparar contexto</button><button class="btn" data-action="copy-context">Copiar JSON</button></div>
+        </div>
+      </div>
+    `,"Inicio");
+  }
+
+  function productsPage(){
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Testing workspace</div><h1>Productos</h1><p>El día importa, pero la calidad del test depende de cuántos creativos publicados, conceptos, avatares y ángulos hayas probado.</p></div>
+      <button class="btn primary" data-action="add-product">${icon("plus")} Nuevo producto</button></div>
+      ${contextStrip()}
+      <div class="section-title"><div><h2>Activos</h2><p>Tres productos simultáneos.</p></div></div>
+      <div class="grid cols-3">${activeProducts().map(productCard).join("")}</div>
+      ${state.products.length>3?`<div class="section-title"><div><h2>Otros productos</h2></div></div><div class="grid cols-3">${state.products.slice(3).map(productCard).join("")}</div>`:""}
+    `,"Productos");
+  }
+
+  function conceptsPage(){
+    const cats=["Todos",...Array.from(new Set(state.concepts.map(c=>c.category)))];
+    let list=state.concepts.filter(c=>{
+      const q=(state.ui.search||"").toLowerCase();
+      const hit=!q || (c.name+" "+c.desc+" "+c.tags.join(" ")).toLowerCase().includes(q);
+      const cat=state.ui.conceptFilter==="Todos" || c.category===state.ui.conceptFilter;
+      return hit&&cat;
+    });
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Reusable intelligence</div><h1>Biblioteca de conceptos</h1><p>Conceptos globales reutilizables. Guarda la estructura, hook, acciones, categoría, fuente y rendimiento; no los encierres dentro de un único producto.</p></div>
+      <button class="btn primary" data-action="add-concept">${icon("plus")} Nuevo concepto</button></div>
+      ${contextStrip()}
+      <div class="toolbar">
+        <input class="search" id="conceptSearch" placeholder="Buscar concepto, hook, acción..." value="${esc(state.ui.search||"")}" />
+        <select class="select" id="conceptFilter">${cats.map(c=>`<option ${state.ui.conceptFilter===c?'selected':''}>${esc(c)}</option>`).join("")}</select>
+        <span class="badge">${list.length} conceptos</span>
+      </div>
+      <div class="grid cols-3">
+        ${list.map(c=>`<div class="card concept-card">
+          <div class="concept-preview"><div class="scene"><div class="scene-figure"></div><div class="scene-figure small"></div><div class="scene-card"></div></div></div>
+          <div class="concept-body">
+            <div class="concept-top"><div><div class="concept-name">${esc(c.name)}</div><div class="product-sub">${esc(c.category)} · ${esc(c.source)}</div></div><span class="badge">${c.uses} usos</span></div>
+            <div class="concept-desc">${esc(c.desc)}</div>
+            <div class="chips">${c.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>
+            <div class="concept-stats"><div class="concept-stat"><b>${fmt(c.bestViews)}</b><span>Mejor</span></div><div class="concept-stat"><b>${fmt(c.avgViews)}</b><span>Media</span></div><div class="concept-stat"><b>${c.uses}</b><span>Tests</span></div></div>
+            <div class="card-actions"><button class="btn small primary" data-select-concept="${c.id}">Seleccionar para ChatGPT</button><button class="btn small" data-action="concept-detail" data-id="${c.id}">Ver ficha</button></div>
+          </div>
+        </div>`).join("")}
+      </div>
+    `,"Conceptos");
+  }
+
+  function productWorkspace(p){
+    const score=coverageScore(p), sig=testSignal(p);
+    const tabs=["overview","assets","avatars","videos","concepts"];
+    const labels={overview:"Resumen",assets:"Assets",avatars:"Avatares",videos:"Vídeos publicados",concepts:"Conceptos probados"};
+    return shell(`
+      <div class="workspace-head">
+        <div class="workspace-product"><div class="workspace-logo">${esc(p.name.slice(0,2).toUpperCase())}</div><div class="workspace-copy"><h1>${esc(p.name)}</h1><p>${esc(p.label)} · Día ${p.day}/${p.testMax} · ${p.published} creativos publicados</p></div></div>
+        <div class="workspace-actions"><button class="btn" data-select-product="${p.id}">Seleccionar para ChatGPT</button><button class="btn" data-action="edit-product" data-id="${p.id}">${icon("edit")} Métricas</button><button class="btn primary" data-route="tree" data-tree-product="${p.id}">Creative Tree</button></div>
+      </div>
+      ${contextStrip()}
+      <div class="kpi-grid">
+        ${kpi(p.published,"Vídeos publicados")}
+        ${kpi(fmt(p.views),"Views acumuladas")}
+        ${kpi(p.comments,"Comentarios")}
+        ${kpi(p.sales,"Ventas")}
+        ${kpi(fmt(p.bestViews),"Mejor vídeo")}
+        ${kpi(score+"%","Cobertura creativa")}
+      </div>
+      <div class="tabs">${tabs.map(t=>`<button class="tab ${state.ui.productTab===t?'active':''}" data-product-tab="${t}">${labels[t]}</button>`).join("")}</div>
+      ${productTabContent(p,state.ui.productTab,sig,score)}
+    `,p.name,"Productos / Workspace");
+  }
+  function kpi(v,l){ return `<div class="kpi"><b>${esc(v)}</b><span>${esc(l)}</span></div>`; }
+
+  function productTabContent(p,tab,sig,score){
+    if(tab==="assets"){
+      return `<div class="section-title"><div><h2>Assets del producto</h2><p>Producto, producto en uso, packaging, ropa, fondos y ambientes.</p></div><button class="btn primary" data-action="upload-asset" data-product-id="${p.id}">${icon("upload")} Añadir asset</button></div>
+      ${assetGrid(p.assets,p.id)}`;
+    }
+    if(tab==="avatars"){
+      return `<div class="section-title"><div><h2>Avatares / segmentos</h2><p>El avatar no es solo una cara: guarda función, edad, segmento y ángulo.</p></div><button class="btn primary" data-action="add-avatar" data-product-id="${p.id}">${icon("plus")} Nuevo avatar</button></div>
+      <div class="avatar-grid">${p.avatars.map(a=>avatarCard(a,p.id)).join("")}</div>`;
+    }
+    if(tab==="videos"){
+      const list=state.videos.filter(v=>v.productId===p.id);
+      return `<div class="section-title"><div><h2>Creativos publicados</h2><p>Solo un vídeo publicado cuenta como unidad de test. Los intentos de generación no.</p></div><button class="btn" data-action="add-published" data-product-id="${p.id}">${icon("plus")} Registrar publicado</button></div>
+      ${videoTable(list)}`;
+    }
+    if(tab==="concepts"){
+      const ids=new Set(state.videos.filter(v=>v.productId===p.id).map(v=>v.conceptId));
+      const list=state.concepts.filter(c=>ids.has(c.id));
+      return `<div class="section-title"><div><h2>Conceptos probados</h2><p>${p.conceptsTested} conceptos contabilizados en el test.</p></div><button class="btn" data-route="concepts">Abrir biblioteca global</button></div>
+      <div class="grid cols-3">${list.map(c=>`<div class="card pad"><div class="concept-name">${esc(c.name)}</div><div class="concept-desc">${esc(c.desc)}</div><div class="chips">${c.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div><div class="card-actions" style="margin-top:12px"><button class="btn small primary" data-select-concept="${c.id}">Seleccionar</button></div></div>`).join("")}</div>`;
+    }
+    return `<div class="split">
+      <div>
+        <div class="grid cols-2">
+          <div class="card test-quality">
+            <div class="quality-head"><div><div class="eyebrow" style="margin:0 0 4px">Test quality</div><div class="quality-score">${score}%</div><div class="quality-caption">Cobertura creativa estimada</div></div><div class="signal"><span class="mini-dot ${sig.cls}"></span>${sig.label}</div></div>
+            <div class="quality-grid">
+              ${qualityBox("Conceptos",p.conceptsTested,5)}
+              ${qualityBox("Avatares",p.avatarsTested,3)}
+              ${qualityBox("Ángulos",p.anglesTested,4)}
+            </div>
+          </div>
+          <div class="card pad">
+            <div class="panel-head" style="padding:0 0 12px;border:0"><div><h3>Lectura del test</h3><p>No se decide únicamente por días.</p></div></div>
+            <div class="review-note">${testAdvice(p)}</div>
+            <div class="chips"><span class="chip blue">Día ${p.day}/${p.testMax}</span><span class="chip">${p.published} publicados</span><span class="chip">${p.sales} ventas</span><span class="chip">${fmt(p.bestViews)} mejor vídeo</span></div>
+          </div>
+        </div>
+        <div class="section-title"><div><h2>Creative Brief</h2><p>Notas persistentes que ChatGPT podrá consultar antes de crear.</p></div><span class="badge green">Autosave local</span></div>
+        <textarea class="brief" id="brief-${p.id}" data-brief-product="${p.id}">${esc(p.brief||"")}</textarea>
+      </div>
+      <div class="side-panel">
+        ${chatContextPanel(p)}
+      </div>
+    </div>`;
+  }
+  function qualityBox(label,n,target){
+    const pct=Math.min(n/target*100,100);
+    return `<div class="quality-box"><b>${label} · ${n}</b><div class="bar"><i style="width:${pct}%"></i></div><span>${pct>=100?"Cobertura amplia":"Aún puedes diversificar"}</span></div>`;
+  }
+  function testAdvice(p){
+    const score=coverageScore(p);
+    if(p.day>=7 && score>=80 && p.bestViews<5000 && p.sales===0) return "Test amplio y sin señal clara: candidato fuerte a descartar, pero nunca de forma automática.";
+    if(p.day>=5 && score<65) return `Llevas ${p.day} días, pero el test sigue estrecho. Antes de concluir, aumenta diversidad de conceptos, avatares o ángulos.`;
+    if(p.bestViews>=20000 || p.sales>=5) return "Hay señal suficiente para explotar el mejor descendiente: pilares pequeños, cambio de avatar, ángulo o concepto.";
+    if(p.bestViews>=5000) return "Hay interés. Empieza variantes del ganador sin abandonar por completo la exploración.";
+    return "Todavía no hay señal suficiente. Sigue publicando creativos distintos y evita juzgar únicamente por el día del test.";
+  }
+  function chatContextPanel(p){
+    const selected = contextItems();
+    return `<div class="card chat-context-card">
+      <h3>Contexto para ChatGPT</h3>
+      <p>Selecciona referencias aquí. La web no genera por sí misma: prepara exactamente qué debe usar ChatGPT.</p>
+      <div class="context-list">
+        <div class="context-row"><span>Producto activo</span><b>${state.context.productId===p.id?esc(p.name):"No seleccionado"}</b></div>
+        <div class="context-row"><span>Concepto</span><b>${state.context.conceptId?esc(concept(state.context.conceptId)?.name||"—"):"—"}</b></div>
+        <div class="context-row"><span>Vídeo referencia</span><b>${state.context.videoId?esc(video(state.context.videoId)?.title||"—"):"—"}</b></div>
+        <div class="context-row"><span>Avatar</span><b>${state.context.avatarId?esc(avatarById(state.context.avatarId)?.name||"—"):"—"}</b></div>
+        <div class="context-row"><span>Assets</span><b>${(state.context.assetIds||[]).length} seleccionados</b></div>
+      </div>
+      <div class="note-box"><textarea id="contextInstruction" placeholder="Ej: cambia solo ropa y pequeños detalles de fondo. Mantén cámara y acciones.">${esc(state.context.instruction||"")}</textarea></div>
+      <div class="lock-grid">
+        ${lockItem("camera","Mantener cámara")}
+        ${lockItem("actions","Mantener acciones")}
+        ${lockItem("product","Bloquear producto")}
+        ${lockItem("background","Bloquear fondo")}
+      </div>
+      <div style="display:grid;gap:8px;margin-top:10px">
+        <button class="btn primary" data-action="prepare-remix">Preparar REMIX</button>
+        <button class="btn" data-action="prepare-create">Preparar CREATE</button>
+      </div>
+    </div>`;
+  }
+  function lockItem(key,label){
+    return `<div class="lock-item"><span>${label}</span><span class="switch ${state.context.locks?.[key]?'on':''}" data-lock="${key}"></span></div>`;
+  }
+  function assetGrid(assets,pid){
+    if(!assets?.length) return `<div class="empty"><b>Sin assets</b><span>Sube producto, producto en uso, packaging, avatares, ropa o fondos.</span></div>`;
+    return `<div class="asset-grid">${assets.map(a=>{
+      const sel=(state.context.assetIds||[]).includes(a.id);
+      const media=a.src? (a.src.startsWith("data:video")?`<video src="${a.src}" muted></video>`:`<img src="${a.src}" alt="">`) : `<div class="asset-fallback">${esc(a.type.slice(0,1))}</div>`;
+      return `<div class="asset-card">
+        <div class="asset-preview">${media}</div>
+        <div class="asset-check ${sel?'selected':''}" data-select-asset="${a.id}" data-product-id="${pid}">${sel?'✓':'+'}</div>
+        <div class="asset-meta"><b>${esc(a.name)}</b><span>${esc(a.type)}</span></div>
+      </div>`;
+    }).join("")}</div>`;
+  }
+  function avatarCard(a,pid){
+    const sel=state.context.avatarId===a.id;
+    return `<div class="card avatar-card">
+      <div class="avatar-top"><div class="avatar-face"></div><div class="avatar-info"><b>${esc(a.name)}</b><span>${esc(a.segment)}</span></div></div>
+      <div class="avatar-meta">
+        <div class="meta-row"><span>Edad</span><span>${esc(a.age)}</span></div>
+        <div class="meta-row"><span>Función</span><span>${esc(a.role)}</span></div>
+        <div class="meta-row"><span>Ángulo</span><span>${esc(a.angle)}</span></div>
+      </div>
+      <div class="card-actions" style="margin-top:11px"><button class="btn small ${sel?'green':'primary'}" data-select-avatar="${a.id}" data-product-id="${pid}">${sel?'Seleccionado ✓':'Seleccionar para ChatGPT'}</button></div>
+    </div>`;
+  }
+  function videoTable(list){
+    if(!list.length) return `<div class="empty"><b>Aún no hay creativos publicados</b><span>Los intentos de generación no cuentan como test hasta que publiques el vídeo.</span></div>`;
+    return `<div class="table-wrap"><table><thead><tr><th>Vídeo</th><th>Concepto</th><th>Avatar</th><th>Variación</th><th>Views</th><th>Comentarios</th><th>Ventas</th><th>Contexto</th></tr></thead><tbody>
+      ${list.map(v=>`<tr><td><b>${esc(v.title)}</b></td><td>${esc(concept(v.conceptId)?.name||"—")}</td><td>${esc(avatarById(v.avatarId)?.name||"—")}</td><td>${esc(v.variation||"—")}</td>
+      <td><input class="inline-input" data-video-metric="${v.id}" data-field="views" value="${v.views}"></td><td><input class="inline-input" data-video-metric="${v.id}" data-field="comments" value="${v.comments}"></td><td><input class="inline-input" data-video-metric="${v.id}" data-field="sales" value="${v.sales}"></td>
+      <td><button class="btn small" data-select-video="${v.id}">Seleccionar</button></td></tr>`).join("")}
+    </tbody></table></div>`;
+  }
+
+  function assetsPage(){
+    const categories=[
+      ["Producto","Producto"],["Producto en uso","Producto en uso"],["Packaging","Packaging"],
+      ["Avatar","Avatar"],["Ropa","Ropa"],["Fondo","Fondo"],["Ambiente","Ambiente"]
+    ];
+    const activePid=state.ui.assetsProductId || state.context.productId || state.products[0]?.id;
+    const p=product(activePid) || state.products[0];
+    if(!p) return shell(`<div class="empty"><b>Sin productos</b><span>Crea un producto antes de guardar referencias.</span></div>`,"Assets");
+    const activeCat=state.ui.assetsCategory || categories[0][0];
+    const query=(state.ui.assetSearch||"").trim().toLowerCase();
+    const allAssets=state.products.flatMap(prod=>(prod.assets||[]).map(a=>({...a,productId:prod.id,productName:prod.name})));
+    let shown=(p.assets||[]).filter(a=>a.type===activeCat);
+    if(query){
+      shown=allAssets.filter(a=>[a.name,a.type,a.productName].join(" ").toLowerCase().includes(query));
+    }
+    const selected=(state.context.assetIds||[]).map(id=>allAssets.find(a=>a.id===id)).filter(Boolean);
+    const assetCards=shown.length?shown.map(a=>{
+      const sel=(state.context.assetIds||[]).includes(a.id);
+      const media=a.src?(a.src.startsWith("data:video")?`<video src="${a.src}" muted></video>`:`<img src="${a.src}" alt="">`):`<div class="asset-fallback">${esc((a.type||"A").slice(0,1))}</div>`;
+      return `<div class="asset-card">
+        <div class="asset-preview">${media}</div>
+        <div class="asset-check ${sel?'selected':''}" data-select-asset="${a.id}" data-product-id="${a.productId||p.id}">${sel?'✓':'+'}</div>
+        <div class="asset-meta"><b>${esc(a.name)}</b><span>${query?esc(a.productName)+" · ":""}${esc(a.type)}</span></div>
+      </div>`;
+    }).join(""):`<div class="assets-empty"><b>${query?'No hay resultados':'Esta categoría está vacía'}</b><span>${query?'Prueba otra búsqueda.':'Añade la primera referencia de este tipo para '+esc(p.name)+'.'}</span></div>`;
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Reference library</div><h1>Assets</h1><p>Producto → categoría → archivo. Cada referencia queda ordenada dentro de su producto y puede añadirse al contexto de ChatGPT.</p></div><button class="btn primary" data-action="upload-asset" data-product-id="${p.id}">${icon("upload")} Añadir asset</button></div>
+      ${contextStrip()}
+      <div style="height:14px"></div>
+      <div class="assets-shell">
+        <aside class="assets-side">
+          <div class="assets-side-title">Productos</div>
+          <div class="assets-nav">${state.products.map(prod=>`<button class="assets-nav-btn ${prod.id===p.id?'active':''}" data-action="assets-pick-product" data-product-id="${prod.id}"><span class="assets-nav-main"><span>◫</span><span>${esc(prod.name)}</span></span><span class="assets-count">${(prod.assets||[]).length}</span></button>`).join("")}</div>
+          <div class="assets-side-title">Categorías</div>
+          <div class="assets-nav">${categories.map(([key,label])=>`<button class="assets-nav-btn ${!query&&key===activeCat?'active':''}" data-action="assets-pick-category" data-category="${esc(key)}"><span class="assets-nav-main"><span>${key==="Producto"?'◆':key==="Producto en uso"?'◈':key==="Packaging"?'▣':key==="Avatar"?'●':key==="Ropa"?'◇':key==="Fondo"?'▤':'▧'}</span><span>${esc(label)}</span></span><span class="assets-count">${(p.assets||[]).filter(a=>a.type===key).length}</span></button>`).join("")}</div>
+        </aside>
+        <section class="assets-center">
+          <input class="assets-search" id="assetGlobalSearch" value="${esc(state.ui.assetSearch||"")}" placeholder="Buscar asset por nombre, producto o categoría...">
+          <div class="assets-top"><div><h2>${query?'Resultados de búsqueda':esc(p.name)+' · '+esc(activeCat)}</h2><p>${shown.length} archivo${shown.length===1?'':'s'}${query?' en toda la biblioteca':' en esta categoría'}</p></div><button class="btn" data-action="upload-asset" data-product-id="${p.id}">${icon("plus")} Añadir</button></div>
+          <div class="asset-grid">${assetCards}</div>
+        </section>
+        <aside class="assets-context">
+          <h3>Contexto ChatGPT</h3>
+          <div class="assets-context-row"><div class="assets-context-label">Producto</div><div class="assets-context-value">${esc(product(state.context.productId)?.name||p.name)}</div></div>
+          <div class="assets-context-row"><div class="assets-context-label">Concepto</div><div class="assets-context-value">${esc(concept(state.context.conceptId)?.name||"Ninguno")}</div></div>
+          <div class="assets-context-row"><div class="assets-context-label">Avatar</div><div class="assets-context-value">${esc(avatarById(state.context.avatarId)?.name||"Ninguno")}</div></div>
+          <div class="assets-context-row"><div class="assets-context-label">Assets seleccionados</div><div class="assets-selected-list">${selected.length?selected.map(a=>`<div class="assets-selected-item">${esc(a.name)} · ${esc(a.productName)}</div>`).join(""):`<div class="assets-context-value">Ninguno</div>`}</div></div>
+          <button class="btn primary" style="width:100%;margin-top:8px" data-action="copy-context">Copiar contexto completo</button>
+          <button class="btn ghost" style="width:100%;margin-top:7px" data-action="clear-context">Limpiar selección</button>
+        </aside>
+      </div>
+    `,"Assets");
+  }
+
+  function treePage(){
+    const pid=state.ui.treeProductId || state.context.productId || activeProducts()[0]?.id;
+    const p=product(pid)||activeProducts()[0];
+    const roots=state.videos.filter(v=>v.productId===p.id && !v.parentId);
+    const descendants=root=>state.videos.filter(v=>v.productId===p.id && v.parentId===root.id);
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Winner exploitation</div><h1>Creative Tree</h1><p>Visualiza de dónde sale cada variante y ramifica desde el descendiente que realmente funciona mejor.</p></div>
+      <select class="select" id="treeProduct">${state.products.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join("")}</select></div>
+      ${contextStrip()}
+      <div class="card tree-shell">
+        <div class="tree">
+          <div class="tree-col">${roots.map(r=>treeNode(r,true)).join("")||`<div class="empty"><b>Sin raíz publicada</b><span>Registra un creativo publicado para empezar el árbol.</span></div>`}</div>
+          <div class="tree-col">${roots.flatMap(r=>descendants(r)).map(v=>treeNode(v,false)).join("")}</div>
+          <div class="tree-col">${state.videos.filter(v=>v.productId===p.id && v.parentId && state.videos.some(x=>x.parentId===v.id)).flatMap(v=>state.videos.filter(x=>x.parentId===v.id)).map(v=>treeNode(v,false)).join("")}</div>
+        </div>
+      </div>
+      <div class="section-title"><div><h2>Explotar ganador</h2><p>No genera automáticamente. Define qué eje quieres cambiar y lo añade al contexto de ChatGPT.</p></div></div>
+      <div class="grid cols-4">
+        ${exploitCard("Pilar","Cambios mínimos de fondo, ropa, iluminación o detalles visuales.","pillar")}
+        ${exploitCard("Avatar","Cambiar segmento/persona manteniendo la estructura ganadora.","avatar")}
+        ${exploitCard("Ángulo de venta","Cambiar la razón de compra sin perder el hook/estructura.","angle")}
+        ${exploitCard("Concepto","Mover el producto a otro concepto manteniendo aprendizajes del ganador.","concept")}
+      </div>
+    `,"Creative Tree");
+  }
+  function treeNode(v,root){
+    const best=v.views>=20000||v.sales>=5;
+    return `<div class="tree-node ${root?'root':''} ${best?'best':''}">
+      <div class="node-title">${esc(v.title)}</div><div class="node-sub">${esc(v.variation||"Original")}</div>
+      <div class="node-metrics"><span>${fmt(v.views)} views</span><span>${v.sales} ventas</span></div>
+      <div class="node-tag">${esc(concept(v.conceptId)?.name||"Sin concepto")}</div>
+      <div class="card-actions" style="margin-top:9px"><button class="btn small" data-select-video="${v.id}">Usar rama</button></div>
+    </div>`;
+  }
+  function exploitCard(title,desc,type){
+    return `<div class="card pad"><div class="concept-name">${title}</div><div class="concept-desc">${desc}</div><button class="btn small primary" data-exploit="${type}">Añadir al contexto</button></div>`;
+  }
+
+  function reviewPage(){
+    const jobs=[...state.jobs].sort((a,b)=>({review:0,generating:1,queued:2,approved:3}[a.status]??9)-({review:0,generating:1,queued:2,approved:3}[b.status]??9));
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Generation workflow</div><h1>Revisión & Jobs</h1><p>Los jobs son intentos de generación, no unidades de test. Aquí revisas, corriges, reintentas y apruebas antes de publicar.</p></div>
+      <div class="hero-stats"><div class="stat-chip"><b>${jobs.filter(j=>j.status==="review").length}</b><span>Review</span></div><div class="stat-chip"><b>${jobs.filter(j=>j.status==="generating").length}</b><span>Generando</span></div><div class="stat-chip"><b>${jobs.filter(j=>j.status==="approved").length}</b><span>Aprobados</span></div></div></div>
+      ${contextStrip()}
+      <div class="job-grid">${jobs.map(jobCard).join("")}</div>
+    `,"Revisión & Jobs");
+  }
+  function jobCard(j){
+    const p=product(j.productId);
+    const statusMap={review:["Listo para review","yellow"],generating:["Generando","blue"],queued:["En cola",""],approved:["Aprobado / upscale","green"],error:["Error","red"]};
+    const st=statusMap[j.status]||[j.status,""];
+    return `<div class="card job-card">
+      <div class="job-preview"><div class="play">${icon("play")}</div></div>
+      <div class="job-copy">
+        <div style="display:flex;justify-content:space-between;gap:10px"><div><span class="badge ${st[1]}">${st[0]}</span><h3>${esc(j.title)}</h3></div><span class="badge">V${j.version}</span></div>
+        <p>${esc(p?.name||"")} · ${esc(j.mode)} · ${esc(j.model)}</p>
+        <div class="job-meta"><span class="chip">${esc(concept(j.conceptId)?.name||"Sin concepto")}</span><span class="chip">${esc(avatarById(j.avatarId)?.name||"Sin avatar")}</span></div>
+        ${j.status==="generating"||j.status==="queued"?`<div class="progress"><i style="width:${j.progress}%"></i></div><div class="status-line">${j.progress}% · puedes seguir trabajando en otro producto mientras termina.</div>`:""}
+        ${j.note?`<div class="review-note">${esc(j.note)}</div>`:""}
+        ${j.feedback?`<div class="review-note"><b>Último feedback:</b> ${esc(j.feedback)}</div>`:""}
+        <div class="job-actions">
+          ${j.status==="review"?`<button class="btn small green" data-approve-job="${j.id}">${icon("check")} Aprobar + upscale</button><button class="btn small" data-retry-job="${j.id}">${icon("retry")} Reintentar</button><button class="btn small" data-select-job-context="${j.id}">Usar contexto</button>`:""}
+          ${j.status==="approved"?`<span class="badge green">${esc(state.settings.upscale)}</span><button class="btn small" data-action="mark-published" data-job-id="${j.id}">Marcar publicado</button>`:""}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function resultsPage(){
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">Published performance</div><h1>Resultados</h1><p>Views, comentarios y ventas pertenecen a creativos publicados. Edita métricas directamente; el sistema mantiene la genealogía creativa.</p></div></div>
+      ${contextStrip()}
+      ${videoTable(state.videos)}
+    `,"Resultados");
+  }
+
+  function settingsPage(){
+    return shell(`
+      <div class="hero"><div><div class="eyebrow">System design</div><h1>Ajustes</h1><p>Presets y conexiones. De momento todo funciona localmente; estas tarjetas dejan claro qué se conectará después.</p></div></div>
+      <div class="grid cols-2">
+        <div class="card pad"><div class="panel-head" style="padding:0 0 14px;border:0"><div><h3>Modelos predeterminados</h3><p>Editables sin cambiar la estructura de la app.</p></div></div>
+          <div class="field"><label>REMIX</label><input id="set-remix" value="${esc(state.settings.remixDefault)}"></div>
+          <div class="field" style="margin-top:10px"><label>CREATE</label><input id="set-create" value="${esc(state.settings.createDefault)}"></div>
+          <div class="field" style="margin-top:10px"><label>UPSCALE</label><input id="set-upscale" value="${esc(state.settings.upscale)}"></div>
+          <button class="btn primary" style="margin-top:12px" data-action="save-settings">Guardar</button>
+        </div>
+        <div class="card pad"><div class="panel-head" style="padding:0 0 14px;border:0"><div><h3>Conexiones</h3><p>Estado conceptual de la arquitectura.</p></div></div>
+          <div class="model-preset"><div><b>ChatGPT Connector</b><span>Leer selección, consultar productos/conceptos y crear acciones.</span></div><span class="badge yellow">Pendiente</span></div>
+          <div class="model-preset" style="margin-top:8px"><div><b>Higgsfield</b><span>Wan 3.0, Seedance 2.5, Genjutsu y ByteDance Upscale.</span></div><span class="badge yellow">Pendiente</span></div>
+          <div class="model-preset" style="margin-top:8px"><div><b>ChatCut</b><span>Primera integración después del flujo de generación.</span></div><span class="badge">Después</span></div>
+        </div>
+        <div class="card pad"><div class="panel-head" style="padding:0 0 14px;border:0"><div><h3>Datos locales</h3><p>Esta versión guarda todo en tu navegador.</p></div></div>
+          <div class="review-note">Puedes probar, añadir conceptos, assets, avatares, métricas y feedback. Nada sale de tu navegador en esta versión.</div>
+          <div class="card-actions"><button class="btn" data-action="export-data">Exportar JSON</button><button class="btn danger" data-action="reset-data">Restaurar demo</button></div>
+        </div>
+      </div>
+    `,"Ajustes");
+  }
+
+  function render(){
+    let html="";
+    if(state.ui.openProductId){
+      const p=product(state.ui.openProductId);
+      if(p) html=productWorkspace(p); else state.ui.openProductId=null;
+    }
+    if(!html){
+      const route=state.ui.route;
+      html = route==="products"?productsPage()
+        : route==="concepts"?conceptsPage()
+        : route==="tree"?treePage()
+        : route==="review"?reviewPage()
+        : route==="results"?resultsPage()
+        : route==="assets"?assetsPage()
+        : route==="settings"?settingsPage()
+        : homePage();
+    }
+    document.getElementById("app").innerHTML=html;
+    bindDynamicInputs();
+  }
+
+  function bindDynamicInputs(){
+    const brief=document.querySelector("[data-brief-product]");
+    if(brief) brief.addEventListener("input",e=>{ const p=product(e.target.dataset.briefProduct); if(p){p.brief=e.target.value;save();}});
+    const ci=document.getElementById("contextInstruction");
+    if(ci) ci.addEventListener("input",e=>{state.context.instruction=e.target.value;save();});
+    const hi=document.getElementById("homeContextInstruction");
+    if(hi) hi.addEventListener("input",e=>{state.context.instruction=e.target.value;save();});
+    const cs=document.getElementById("conceptSearch");
+    if(cs) cs.addEventListener("input",e=>{state.ui.search=e.target.value;save();render();setTimeout(()=>document.getElementById("conceptSearch")?.focus(),0);});
+    const cf=document.getElementById("conceptFilter");
+    if(cf) cf.addEventListener("change",e=>{state.ui.conceptFilter=e.target.value;save();render();});
+    const ags=document.getElementById("assetGlobalSearch");
+    if(ags) ags.addEventListener("input",e=>{state.ui.assetSearch=e.target.value;save();render();setTimeout(()=>{const x=document.getElementById("assetGlobalSearch");if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length);}},0);});
+    const tp=document.getElementById("treeProduct");
+    if(tp) tp.addEventListener("change",e=>{state.ui.treeProductId=e.target.value;save();render();});
+    document.querySelectorAll("[data-video-metric]").forEach(el=>el.addEventListener("change",e=>{
+      const v=video(e.target.dataset.videoMetric); if(v){ v[e.target.dataset.field]=Number(e.target.value)||0; recalcProduct(v.productId); save(); toast("Métrica actualizada");}
+    }));
+  }
+
+  function recalcProduct(pid){
+    const p=product(pid); if(!p) return;
+    const vs=state.videos.filter(v=>v.productId===pid && v.published);
+    p.published=vs.length;
+    p.views=vs.reduce((a,v)=>a+Number(v.views||0),0);
+    p.comments=vs.reduce((a,v)=>a+Number(v.comments||0),0);
+    p.sales=vs.reduce((a,v)=>a+Number(v.sales||0),0);
+    p.bestViews=vs.reduce((a,v)=>Math.max(a,Number(v.views||0)),0);
+    p.conceptsTested=new Set(vs.map(v=>v.conceptId).filter(Boolean)).size || p.conceptsTested;
+    p.avatarsTested=new Set(vs.map(v=>v.avatarId).filter(Boolean)).size || p.avatarsTested;
+    p.anglesTested=new Set(vs.map(v=>v.angle).filter(Boolean)).size || p.anglesTested;
+  }
+
+  function route(r){
+    state.ui.route=r; state.ui.openProductId=null; state.ui.sidebarOpen=false; save(); render();
+  }
+  function selectProduct(id){
+    state.context.productId=id;
+    const p=product(id);
+    if(state.context.avatarId && !(p?.avatars||[]).some(a=>a.id===state.context.avatarId)) state.context.avatarId=null;
+    state.ui.openProductId=id; save(); render(); toast(`${p?.name||"Producto"} añadido al contexto`);
+  }
+  function toggleAsset(id){
+    const arr=state.context.assetIds||(state.context.assetIds=[]);
+    const i=arr.indexOf(id); if(i>=0) arr.splice(i,1); else arr.push(id);
+    save(); render();
+  }
+  function copyContext(){
+    const payload=buildContextPayload();
+    navigator.clipboard?.writeText(JSON.stringify(payload,null,2)).then(()=>toast("Contexto copiado al portapapeles")).catch(()=>showTextModal("Contexto ChatGPT",JSON.stringify(payload,null,2)));
+  }
+  function buildContextPayload(){
+    const p=product(state.context.productId);
+    const c=concept(state.context.conceptId);
+    const v=video(state.context.videoId);
+    const a=avatarById(state.context.avatarId);
+    const assets=[];
+    for(const aid of state.context.assetIds||[]){
+      for(const prod of state.products){ const x=(prod.assets||[]).find(z=>z.id===aid); if(x){assets.push({id:x.id,name:x.name,type:x.type,productId:prod.id});break;} }
+    }
+    return {
+      selected_at:new Date().toISOString(),
+      mode:state.context.mode,
+      product:p?{id:p.id,name:p.name,label:p.label,brief:p.brief}:null,
+      concept:c?{id:c.id,name:c.name,category:c.category,description:c.desc,source:c.source,tags:c.tags}:null,
+      video:v?{id:v.id,title:v.title,variation:v.variation,views:v.views,sales:v.sales}:null,
+      avatar:a?{id:a.id,name:a.name,age:a.age,segment:a.segment,angle:a.angle,role:a.role}:null,
+      assets,
+      instruction:state.context.instruction,
+      locks:state.context.locks,
+      presets:{remix:state.settings.remixDefault,create:state.settings.createDefault,upscale:state.settings.upscale}
+    };
+  }
+
+  function prepare(mode){
+    state.context.mode=mode;
+    save();
+    const p=product(state.context.productId);
+    if(!p){ toast("Selecciona primero un producto"); return; }
+    showContextModal(mode);
+  }
+  function showContextModal(mode){
+    const ctx=buildContextPayload();
+    const missing=[];
+    if(mode==="REMIX" && !ctx.video && !ctx.concept) missing.push("vídeo o concepto de referencia");
+    if(!ctx.avatar) missing.push("avatar (opcional, pero recomendado)");
+    modal(`
+      <div class="modal-head"><div><h3>${mode} preparado para ChatGPT</h3><p>Esto es lo que el futuro conector entregará al chat automáticamente.</p></div><button class="close" data-close-modal>×</button></div>
+      <div class="modal-body">
+        ${missing.length?`<div class="review-note"><b>Falta:</b> ${missing.join(", ")}.</div>`:""}
+        <div class="context-list">
+          <div class="context-row"><span>Producto</span><b>${esc(ctx.product?.name||"—")}</b></div>
+          <div class="context-row"><span>Concepto</span><b>${esc(ctx.concept?.name||"—")}</b></div>
+          <div class="context-row"><span>Vídeo</span><b>${esc(ctx.video?.title||"—")}</b></div>
+          <div class="context-row"><span>Avatar</span><b>${esc(ctx.avatar?.name||"—")}</b></div>
+          <div class="context-row"><span>Assets</span><b>${ctx.assets.length}</b></div>
+          <div class="context-row"><span>Modelo</span><b>${esc(mode==="REMIX"?state.settings.remixDefault:state.settings.createDefault)}</b></div>
+        </div>
+        <div class="review-note" style="margin-top:12px"><b>Instrucciones:</b><br>${esc(ctx.instruction||"Sin instrucciones adicionales.")}</div>
+        <div class="chips">${Object.entries(ctx.locks).filter(([,v])=>v).map(([k])=>`<span class="chip blue">Lock · ${esc(k)}</span>`).join("")}</div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-action="copy-context">Copiar JSON</button><button class="btn primary" data-close-modal>Listo</button></div>
+    `);
+  }
+  function openContextModal(){
+    const ctx=buildContextPayload();
+    modal(`<div class="modal-head"><div><h3>Contexto activo</h3><p>Selección persistente de la web.</p></div><button class="close" data-close-modal>×</button></div>
+      <div class="modal-body"><pre style="white-space:pre-wrap;font-size:10px;line-height:1.5;color:#cbd5e5;background:#0a0e14;border:1px solid #202838;border-radius:12px;padding:12px">${esc(JSON.stringify(ctx,null,2))}</pre></div>
+      <div class="modal-foot"><button class="btn" data-action="copy-context">Copiar</button><button class="btn primary" data-close-modal>Cerrar</button></div>`);
+  }
+
+  function addProductModal(){
+    modal(formModal("Nuevo producto","Añade únicamente lo necesario. El resto se completa desde su workspace.",`
+      <div class="form-grid">
+        <div class="field"><label>Nombre / marca</label><input id="f-name" placeholder="Ej: PawShield"></div>
+        <div class="field"><label>Producto</label><input id="f-label" placeholder="Ej: Orejeras para perros"></div>
+        <div class="field"><label>Estado</label><select id="f-status"><option>Preparing</option><option selected>Testing</option><option>Winner</option><option>Paused</option></select></div>
+        <div class="field"><label>Día de test</label><input id="f-day" type="number" min="0" max="30" value="1"></div>
+        <div class="field full"><label>Creative brief inicial</label><textarea id="f-brief" placeholder="Problema, uso, limitaciones, escenas, claims a evitar..."></textarea></div>
+      </div>`,`create-product`));
+  }
+
+  function addConceptModal(){
+    modal(formModal("Nuevo concepto","Guarda la idea como estructura reutilizable, no como prompt cerrado.",`
+      <div class="form-grid">
+        <div class="field"><label>Nombre</label><input id="f-name" placeholder="Ej: Regalo mientras arregla bicicleta"></div>
+        <div class="field"><label>Categoría</label><select id="f-category"><option>Global</option><option>Pets</option><option>Babies</option><option>Sport</option><option>Gift</option></select></div>
+        <div class="field full"><label>Descripción / estructura</label><textarea id="f-desc" placeholder="Hook, acción, reveal, timing general..."></textarea></div>
+        <div class="field"><label>Fuente</label><input id="f-source" placeholder="Vídeo viral / TikTok / referencia"></div>
+        <div class="field"><label>Tags</label><input id="f-tags" placeholder="Hook social, regalo, reveal"></div>
+      </div>`,`create-concept`));
+  }
+
+  function editProductModal(p){
+    modal(formModal(`Métricas · ${p.name}`,"Edita el estado agregado del test.",`
+      <div class="form-grid">
+        <div class="field"><label>Estado</label><select id="f-status">${["Preparing","Testing","Winner","Paused","Discarded"].map(x=>`<option ${p.status===x?'selected':''}>${x}</option>`).join("")}</select></div>
+        <div class="field"><label>Día</label><input id="f-day" type="number" value="${p.day}"></div>
+        <div class="field"><label>Publicados</label><input id="f-published" type="number" value="${p.published}"></div>
+        <div class="field"><label>Conceptos probados</label><input id="f-concepts" type="number" value="${p.conceptsTested}"></div>
+        <div class="field"><label>Avatares probados</label><input id="f-avatars" type="number" value="${p.avatarsTested}"></div>
+        <div class="field"><label>Ángulos probados</label><input id="f-angles" type="number" value="${p.anglesTested}"></div>
+        <div class="field"><label>Views</label><input id="f-views" type="number" value="${p.views}"></div>
+        <div class="field"><label>Comentarios</label><input id="f-comments" type="number" value="${p.comments}"></div>
+        <div class="field"><label>Ventas</label><input id="f-sales" type="number" value="${p.sales}"></div>
+        <div class="field"><label>Mejor vídeo</label><input id="f-best" type="number" value="${p.bestViews}"></div>
+      </div>`,`save-product-metrics`,`data-product-id="${p.id}"`));
+  }
+
+  function addAvatarModal(pid){
+    modal(formModal("Nuevo avatar / segmento","Guarda lo que realmente cambia la comunicación, no solo una cara.",`
+      <div class="form-grid">
+        <div class="field"><label>Nombre</label><input id="f-name" placeholder="Runner hombre 24"></div>
+        <div class="field"><label>Edad</label><input id="f-age" placeholder="24"></div>
+        <div class="field full"><label>Segmento</label><input id="f-segment" placeholder="Runners urbanos"></div>
+        <div class="field full"><label>Ángulo relevante</label><input id="f-angle" placeholder="Proteger dedos durante running"></div>
+        <div class="field full"><label>Función / rol</label><input id="f-role" placeholder="Runner / demostración"></div>
+      </div>`,`create-avatar`,`data-product-id="${pid}"`));
+  }
+
+  function uploadAssetModal(pid){
+    modal(formModal("Añadir asset","Puedes guardar una imagen o vídeo local para probar la interfaz. Se almacena en tu navegador.",`
+      <div class="form-grid">
+        <div class="field"><label>Nombre</label><input id="f-name" placeholder="Producto frontal"></div>
+        <div class="field"><label>Tipo</label><select id="f-type"><option>Producto</option><option>Producto en uso</option><option>Packaging</option><option>Avatar</option><option>Ropa</option><option>Fondo</option><option>Ambiente</option></select></div>
+        <div class="field full"><label>Archivo</label><input id="f-file" type="file" accept="image/*,video/*"></div>
+      </div>`,`create-asset`,`data-product-id="${pid}"`));
+  }
+
+  function retryModal(j){
+    const chips=["Producto incorrecto","Avatar incorrecto","Acciones cambiadas","Cámara cambiada","Manos/deformaciones","Fondo incorrecto","Timing incorrecto","Otro"];
+    modal(`<div class="modal-head"><div><h3>Reintentar · ${esc(j.title)}</h3><p>Tu feedback se conserva junto al intento anterior.</p></div><button class="close" data-close-modal>×</button></div>
+      <div class="modal-body">
+        <div class="feedback-chips">${chips.map(c=>`<span class="feedback-chip" data-feedback-chip="${esc(c)}">${esc(c)}</span>`).join("")}</div>
+        <div class="field"><label>Qué salió mal / qué debe cambiar</label><textarea id="retryFeedback" placeholder="Ej: el producto se deforma al colocarlo. Mantén exactamente las acciones y cambia solo la camiseta."></textarea></div>
+        <div class="review-note"><b>Se mantiene:</b> prompt/instrucciones anteriores + contexto + feedback nuevo. No se borra el intento previo.</div>
+      </div>
+      <div class="modal-foot"><button class="btn" data-close-modal>Cancelar</button><button class="btn primary" data-confirm-retry="${j.id}">Crear V${j.version+1}</button></div>`);
+  }
+
+  function addPublishedModal(pid,jobId=null){
+    const p=product(pid);
+    modal(formModal(`Registrar creativo publicado · ${p.name}`,"Solo ahora pasa a contar como unidad real de test.",`
+      <div class="form-grid">
+        <div class="field full"><label>Título</label><input id="f-title" value="${jobId?esc(state.jobs.find(j=>j.id===jobId)?.title||""):""}" placeholder="Nombre interno"></div>
+        <div class="field"><label>Concepto</label><select id="f-concept"><option value="">—</option>${state.concepts.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+        <div class="field"><label>Avatar</label><select id="f-avatar"><option value="">—</option>${p.avatars.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select></div>
+        <div class="field full"><label>Ángulo de venta</label><input id="f-angle" placeholder="Ej: Protección durante running"></div>
+        <div class="field"><label>Views</label><input id="f-views" type="number" value="0"></div>
+        <div class="field"><label>Comentarios</label><input id="f-comments" type="number" value="0"></div>
+        <div class="field"><label>Ventas</label><input id="f-sales" type="number" value="0"></div>
+        <div class="field"><label>Padre / variante de</label><select id="f-parent"><option value="">Original</option>${state.videos.filter(v=>v.productId===pid).map(v=>`<option value="${v.id}">${esc(v.title)}</option>`).join("")}</select></div>
+        <div class="field full"><label>Tipo de variación</label><input id="f-variation" placeholder="Pilar · Fondo / Avatar / Ángulo / Concepto"></div>
+      </div>`,`create-published`,`data-product-id="${pid}" data-job-id="${jobId||""}"`));
+  }
+
+  function conceptDetailModal(c){
+    modal(`<div class="modal-head"><div><h3>${esc(c.name)}</h3><p>${esc(c.category)} · ${esc(c.source)}</p></div><button class="close" data-close-modal>×</button></div>
+      <div class="modal-body"><div class="concept-preview" style="border-radius:14px;margin-bottom:14px"><div class="scene"><div class="scene-figure"></div><div class="scene-figure small"></div><div class="scene-card"></div></div></div>
+      <div class="review-note">${esc(c.desc)}</div><div class="chips">${c.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>
+      <div class="concept-stats"><div class="concept-stat"><b>${fmt(c.bestViews)}</b><span>Mejor</span></div><div class="concept-stat"><b>${fmt(c.avgViews)}</b><span>Media</span></div><div class="concept-stat"><b>${c.uses}</b><span>Usos</span></div></div></div>
+      <div class="modal-foot"><button class="btn primary" data-select-concept="${c.id}" data-close-after>Seleccionar para ChatGPT</button></div>`);
+  }
+
+  function formModal(title,sub,body,action,attrs=""){
+    return `<div class="modal-head"><div><h3>${esc(title)}</h3><p>${esc(sub)}</p></div><button class="close" data-close-modal>×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn" data-close-modal>Cancelar</button><button class="btn primary" data-action="${action}" ${attrs}>Guardar</button></div>`;
+  }
+  function modal(html){ document.getElementById("modalRoot").innerHTML=`<div class="modal-backdrop"><div class="modal">${html}</div></div>`; }
+  function closeModal(){ const r=document.getElementById("modalRoot"); if(r) r.innerHTML=""; }
+  function showTextModal(title,text){ modal(`<div class="modal-head"><div><h3>${esc(title)}</h3></div><button class="close" data-close-modal>×</button></div><div class="modal-body"><pre style="white-space:pre-wrap;font-size:10px">${esc(text)}</pre></div>`); }
+  function toast(msg){
+    const wrap=document.getElementById("toasts"); if(!wrap) return;
+    const el=document.createElement("div");el.className="toast";el.textContent=msg;wrap.appendChild(el);setTimeout(()=>el.remove(),2800);
+  }
+
+  document.addEventListener("click", async e=>{
+    const t=e.target.closest("[data-route],[data-action],[data-open-product],[data-select-product],[data-select-concept],[data-select-video],[data-select-avatar],[data-select-asset],[data-product-tab],[data-context-remove],[data-lock],[data-review-job],[data-approve-job],[data-retry-job],[data-confirm-retry],[data-feedback-chip],[data-exploit],[data-select-job-context],[data-close-modal]");
+    if(!t) return;
+
+    if(t.dataset.route){
+      if(t.dataset.treeProduct) state.ui.treeProductId=t.dataset.treeProduct;
+      route(t.dataset.route); return;
+    }
+    if(t.dataset.openProduct){ state.ui.openProductId=t.dataset.openProduct; state.ui.route="products"; state.ui.sidebarOpen=false; save(); render(); return; }
+    if(t.dataset.selectProduct){ selectProduct(t.dataset.selectProduct); return; }
+    if(t.dataset.selectConcept){
+      state.context.conceptId=t.dataset.selectConcept; save(); toast(`${concept(t.dataset.selectConcept)?.name||"Concepto"} seleccionado`);
+      if(t.hasAttribute("data-close-after")) closeModal(); else render(); return;
+    }
+    if(t.dataset.selectVideo){
+      const v=video(t.dataset.selectVideo); if(v){state.context.videoId=v.id;state.context.productId=v.productId;state.context.conceptId=v.conceptId||state.context.conceptId;state.context.avatarId=v.avatarId||state.context.avatarId;save();toast("Vídeo añadido al contexto");render();} return;
+    }
+    if(t.dataset.selectAvatar){
+      state.context.avatarId=t.dataset.selectAvatar; state.context.productId=t.dataset.productId||state.context.productId; save();toast("Avatar seleccionado");render();return;
+    }
+    if(t.dataset.selectAsset){ state.context.productId=t.dataset.productId||state.context.productId; toggleAsset(t.dataset.selectAsset); return; }
+    if(t.dataset.productTab){ state.ui.productTab=t.dataset.productTab;save();render();return; }
+    if(t.dataset.contextRemove){
+      if(t.dataset.contextRemove==="asset"){
+        state.context.assetIds=(state.context.assetIds||[]).filter(x=>x!==t.dataset.assetId);
+      } else state.context[t.dataset.contextRemove]=null;
+      save();render();return;
+    }
+    if(t.dataset.lock){ state.context.locks[t.dataset.lock]=!state.context.locks[t.dataset.lock];save();render();return; }
+    if(t.dataset.reviewJob){ route("review"); setTimeout(()=>document.querySelector(`[data-retry-job="${t.dataset.reviewJob}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}),50);return; }
+    if(t.dataset.approveJob){
+      const j=state.jobs.find(x=>x.id===t.dataset.approveJob); if(j){j.status="approved";j.progress=100;save();toast("Aprobado · preset de upscale aplicado");render();} return;
+    }
+    if(t.dataset.retryJob){ const j=state.jobs.find(x=>x.id===t.dataset.retryJob); if(j) retryModal(j); return; }
+    if(t.dataset.feedbackChip){ t.classList.toggle("active"); return; }
+    if(t.dataset.confirmRetry){
+      const j=state.jobs.find(x=>x.id===t.dataset.confirmRetry); if(!j) return;
+      const chips=[...document.querySelectorAll(".feedback-chip.active")].map(x=>x.textContent);
+      const text=document.getElementById("retryFeedback")?.value.trim()||"";
+      const feedback=[...chips,text].filter(Boolean).join(" · ");
+      const nj={...clone(j),id:uid("j"),status:"queued",progress:8,version:j.version+1,feedback,note:j.note,createdAt:now()};
+      state.jobs.unshift(nj); save(); closeModal(); toast(`Retry creado · V${nj.version}`); render(); return;
+    }
+    if(t.dataset.exploit){
+      const map={pillar:"Explotar ganador con cambios mínimos de pilares visuales.",avatar:"Cambiar avatar/segmento manteniendo la estructura ganadora.",angle:"Cambiar ángulo de venta manteniendo hook y estructura.",concept:"Aplicar otro concepto conservando aprendizajes del ganador."};
+      state.context.instruction=[state.context.instruction,map[t.dataset.exploit]].filter(Boolean).join(" ");
+      save();toast("Instrucción añadida al contexto");render();return;
+    }
+    if(t.dataset.selectJobContext){
+      const j=state.jobs.find(x=>x.id===t.dataset.selectJobContext); if(j){state.context.productId=j.productId;state.context.conceptId=j.conceptId;state.context.avatarId=j.avatarId;state.context.mode=j.mode.toUpperCase();state.context.instruction=j.note||"";save();toast("Contexto del job seleccionado");render();}return;
+    }
+    if(t.hasAttribute("data-close-modal")){ closeModal(); return; }
+
+    const a=t.dataset.action;
+    if(!a) return;
+    if(a==="toggle-sidebar"){state.ui.sidebarOpen=!state.ui.sidebarOpen;save();render();}
+    else if(a==="add-product") addProductModal();
+    else if(a==="add-concept") addConceptModal();
+    else if(a==="open-context") openContextModal();
+    else if(a==="copy-context") copyContext();
+    else if(a==="clear-context"){state.context={...clone(seed.context)};save();render();toast("Contexto limpiado");}
+    else if(a==="prepare-chatgpt") prepare(state.context.mode||"REMIX");
+    else if(a==="prepare-remix") prepare("REMIX");
+    else if(a==="prepare-create") prepare("CREATE");
+    else if(a==="concept-detail"){const c=concept(t.dataset.id);if(c)conceptDetailModal(c);}
+    else if(a==="edit-product"){const p=product(t.dataset.id);if(p)editProductModal(p);}
+    else if(a==="add-avatar") addAvatarModal(t.dataset.productId);
+    else if(a==="assets-pick-product"){state.ui.assetsProductId=t.dataset.productId;state.ui.assetSearch="";state.context.productId=t.dataset.productId;save();render();}
+    else if(a==="assets-pick-category"){state.ui.assetsCategory=t.dataset.category;state.ui.assetSearch="";save();render();}
+    else if(a==="upload-asset") uploadAssetModal(t.dataset.productId);
+    else if(a==="add-published") addPublishedModal(t.dataset.productId);
+    else if(a==="mark-published"){const j=state.jobs.find(x=>x.id===t.dataset.jobId);if(j)addPublishedModal(j.productId,j.id);}
+    else if(a==="create-product"){
+      const name=document.getElementById("f-name")?.value.trim(), label=document.getElementById("f-label")?.value.trim();
+      if(!name||!label){toast("Nombre y producto son obligatorios");return;}
+      const p={id:uid("p"),name,label,status:document.getElementById("f-status").value,day:Number(document.getElementById("f-day").value)||1,testMax:7,published:0,conceptsTested:0,avatarsTested:0,anglesTested:0,views:0,comments:0,sales:0,bestViews:0,accent:"paw",brief:document.getElementById("f-brief").value,assets:[],avatars:[]};
+      state.products.push(p);save();closeModal();state.ui.openProductId=p.id;render();toast("Producto creado");
+    }
+    else if(a==="create-concept"){
+      const name=document.getElementById("f-name")?.value.trim(); if(!name){toast("Pon un nombre");return;}
+      const c={id:uid("c"),name,category:document.getElementById("f-category").value,desc:document.getElementById("f-desc").value,source:document.getElementById("f-source").value||"Manual",uses:0,bestViews:0,avgViews:0,tags:(document.getElementById("f-tags").value||"").split(",").map(x=>x.trim()).filter(Boolean)};
+      state.concepts.unshift(c);save();closeModal();render();toast("Concepto guardado");
+    }
+    else if(a==="save-product-metrics"){
+      const p=product(t.dataset.productId); if(!p)return;
+      p.status=document.getElementById("f-status").value;p.day=Number(document.getElementById("f-day").value)||0;p.published=Number(document.getElementById("f-published").value)||0;
+      p.conceptsTested=Number(document.getElementById("f-concepts").value)||0;p.avatarsTested=Number(document.getElementById("f-avatars").value)||0;p.anglesTested=Number(document.getElementById("f-angles").value)||0;
+      p.views=Number(document.getElementById("f-views").value)||0;p.comments=Number(document.getElementById("f-comments").value)||0;p.sales=Number(document.getElementById("f-sales").value)||0;p.bestViews=Number(document.getElementById("f-best").value)||0;
+      save();closeModal();render();toast("Métricas guardadas");
+    }
+    else if(a==="create-avatar"){
+      const p=product(t.dataset.productId);if(!p)return;
+      const av={id:uid("av"),name:document.getElementById("f-name").value||"Nuevo avatar",age:document.getElementById("f-age").value||"—",segment:document.getElementById("f-segment").value||"Sin segmento",angle:document.getElementById("f-angle").value||"—",role:document.getElementById("f-role").value||"—"};
+      p.avatars.push(av);save();closeModal();render();toast("Avatar añadido");
+    }
+    else if(a==="create-asset"){
+      const p=product(t.dataset.productId);if(!p)return;
+      const f=document.getElementById("f-file")?.files?.[0];
+      const finish=(src)=>{
+        p.assets.push({id:uid("as"),name:document.getElementById("f-name").value||f?.name||"Asset",type:document.getElementById("f-type").value,src:src||null});
+        try{save();}catch(e){toast("El archivo es demasiado pesado para localStorage; se guardó sin preview.");p.assets[p.assets.length-1].src=null;save();}
+        closeModal();render();toast("Asset añadido");
+      };
+      if(f){ const reader=new FileReader();reader.onload=()=>finish(reader.result);reader.readAsDataURL(f);} else finish(null);
+    }
+    else if(a==="create-published"){
+      const pid=t.dataset.productId;
+      const v={id:uid("v"),productId:pid,title:document.getElementById("f-title").value||"Creativo publicado",conceptId:document.getElementById("f-concept").value||null,avatarId:document.getElementById("f-avatar").value||null,angle:document.getElementById("f-angle").value||"",published:true,views:Number(document.getElementById("f-views").value)||0,comments:Number(document.getElementById("f-comments").value)||0,sales:Number(document.getElementById("f-sales").value)||0,parentId:document.getElementById("f-parent").value||null,variation:document.getElementById("f-variation").value||"Original",createdAt:now()};
+      state.videos.unshift(v); if(t.dataset.jobId){const j=state.jobs.find(x=>x.id===t.dataset.jobId);if(j)j.publishedVideoId=v.id;}
+      recalcProduct(pid);save();closeModal();render();toast("Creativo registrado como publicado");
+    }
+    else if(a==="save-settings"){
+      state.settings.remixDefault=document.getElementById("set-remix").value;state.settings.createDefault=document.getElementById("set-create").value;state.settings.upscale=document.getElementById("set-upscale").value;save();toast("Ajustes guardados");
+    }
+    else if(a==="export-data"){
+      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const aa=document.createElement("a");aa.href=url;aa.download="creativeos-data.json";aa.click();URL.revokeObjectURL(url);
+    }
+    else if(a==="reset-data"){ if(confirm("¿Restaurar la demo? Se borrarán tus cambios locales.")){state=clone(seed);save();render();toast("Demo restaurada");} }
+  });
+
+  render();
+})();
+
+</script>
+  <div id="conceptEditor"><div class="ce-modal"><div id="ceContent"></div></div></div>
+  <script src="./creativeos-enhancements.js?v=3"></script>
+</body>
+</html>
