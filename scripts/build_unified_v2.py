@@ -12,6 +12,9 @@ index.write_text(base.read_text(encoding='utf-8'), encoding='utf-8')
 # Apply the product -> category -> asset workspace directly to the production app.
 runpy.run_path('scripts/apply_assets_patch.py', run_name='__main__')
 
+# Add published-test analytics, sales-angle views and safe delete controls.
+runpy.run_path('scripts/enhance_testing_workspace.py', run_name='__main__')
+
 s = index.read_text(encoding='utf-8')
 
 meta = '<meta name="creativeos-build" content="unified-v2" />'
@@ -45,6 +48,10 @@ if 'creativeos-enhancements.js?v=3' not in s:
     raise SystemExit('Refusing build: enhancement script missing')
 if 'creativeos-ux-v4.js?v=1' not in s:
     raise SystemExit('Refusing build: workflow center missing')
+if 'Ángulos de venta probados' not in s:
+    raise SystemExit('Refusing build: sales-angle analytics missing')
+if 'data-action="delete-asset"' not in s or 'data-action="delete-avatar"' not in s:
+    raise SystemExit('Refusing build: delete controls missing')
 
 index.write_text(s, encoding='utf-8')
-print('CreativeOS unified-v2 + UX v4 built successfully')
+print('CreativeOS unified-v2 + UX v4 + testing workspace built successfully')
