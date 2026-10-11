@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'base.html'
+      - 'creativeos-cloud.js'
       - 'creativeos-enhancements.css'
       - 'creativeos-enhancements.js'
       - 'creativeos-ux-v4.css'
@@ -38,6 +39,7 @@ jobs:
             'unified enhancements':'creativeos-enhancements.js?v=3' in s,
             'workflow center':'creativeos-ux-v4.js?v=1' in s,
             'workflow styles':'creativeos-ux-v4.css?v=1' in s,
+            'cloud media bridge':'creativeos-cloud.js?v=2' in s,
             'concept editor shell':'id="conceptEditor"' in s,
             'bridge schema':Path('creativeos-bridge-schema.json').exists(),
             'sales angles tab':'Ángulos de venta probados' in s,
