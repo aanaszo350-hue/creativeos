@@ -12,6 +12,8 @@ on:
       - 'creativeos-ux-v4.js'
       - 'creativeos-intelligence.css'
       - 'creativeos-intelligence.js'
+      - 'creativeos-intelligence-crud.css'
+      - 'creativeos-intelligence-crud.js'
       - 'creativeos-bridge-schema.json'
       - 'scripts/apply_assets_patch.py'
       - 'scripts/enhance_testing_workspace.py'
@@ -29,7 +31,9 @@ jobs:
         with:
           ref: main
       - name: Validate Intelligence JavaScript
-        run: node --check creativeos-intelligence.js
+        run: |
+          node --check creativeos-intelligence.js
+          node --check creativeos-intelligence-crud.js
       - name: Build production index
         run: python3 scripts/build_unified_v2.py
       - name: Validate production index
@@ -46,6 +50,8 @@ jobs:
             'cloud media bridge':'creativeos-cloud.js?v=2' in s,
             'intelligence workspace':'creativeos-intelligence.js?v=1' in s,
             'intelligence styles':'creativeos-intelligence.css?v=1' in s,
+            'intelligence crud':'creativeos-intelligence-crud.js?v=1' in s,
+            'intelligence crud styles':'creativeos-intelligence-crud.css?v=1' in s,
             'concept editor shell':'id="conceptEditor"' in s,
             'bridge schema':Path('creativeos-bridge-schema.json').exists(),
             'sales angles tab':'Ángulos de venta probados' in s,
