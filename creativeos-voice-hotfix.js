@@ -1,14 +1,19 @@
 (() => {
   const STORAGE_KEY = 'creativeos_local_v3';
-  let rec = null;
+  let recognition = null;
   let listening = false;
   let previousBrief = '';
-  let transcript = '';
+  let finalTranscript = '';
   let stopTimer = null;
+  let starting = false;
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch { return {}; }
+  }
 
   function getBrief() {
-    try { return (JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').context?.instruction || '').trim(); }
-    catch { return ''; }
+    return (loadState().context?.instruction || '').trim();
   }
 
   function setDraftUi(value) {
@@ -34,117 +39,160 @@
     setTimeout(() => el.remove(), 3600);
   }
 
-  function setMicUi(on) {
+  function ensureStatusPill() {
+    let pill = document.getElementById('coVoiceFloatingStatus');
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'coVoiceFloatingStatus';
+      pill.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:10002;padding:10px 14px;border-radius:999px;background:#2a1116;border:1px solid #ff5b69;color:#ffd8dc;font-size:12px;font-weight:800;box-shadow:0 18px 55px rgba(0,0,0,.4);display:none;align-items:center;gap:9px';
+      pill.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#ff5364;box-shadow:0 0 0 5px rgba(255,83,100,.13)"></span><span>Escuchando…</span>';
+      document.body.appendChild(pill);
+    }
+    return pill;
+  }
+
+  function setMicUi(on, label = 'Escuchando…') {
     document.querySelectorAll('.co-inline-mic[data-co-mic]').forEach(btn => {
       btn.classList.toggle('listening', on);
       btn.textContent = on ? '■' : '🎙';
-      btn.title = on ? 'Parar grabación' : 'Hablar';
+      btn.title = on ? 'Parar' : 'Hablar';
+      btn.disabled = starting && !on;
     });
     document.querySelectorAll('.co-mic[data-co-mic]').forEach(btn => {
       btn.classList.toggle('listening', on);
       btn.innerHTML = on ? '<span class="co-rec-dot"></span> Parar' : '🎙 Hablar';
+      btn.disabled = starting && !on;
     });
     const status = document.getElementById('coVoiceStatus');
-    if (status) status.textContent = on ? 'Escuchando… habla normal' : 'Listo para dictar';
+    if (status) status.textContent = on ? label : (starting ? 'Preparando micrófono…' : 'Listo para dictar');
+    const pill = ensureStatusPill();
+    pill.style.display = on ? 'flex' : 'none';
+    const text = pill.querySelector('span:last-child');
+    if (text) text.textContent = label;
   }
 
   function commitTranscript() {
-    const value = transcript.trim();
-    if (value) {
-      window.CreativeOSRunner?.setBrief?.(value);
-      setDraftUi(value);
-      toast('Brief de voz guardado.', 'ok');
-    } else {
+    const value = finalTranscript.trim();
+    if (!value) {
       setDraftUi(previousBrief);
+      toast('No he detectado una frase completa. Vuelve a pulsar y habla normal.', 'warn');
+      return;
     }
+    window.CreativeOSRunner?.setBrief?.(value);
+    setDraftUi(value);
+    window.CreativeOSRunner?.open?.();
+    toast('Brief de voz guardado.', 'ok');
+  }
+
+  function cleanup() {
+    if (stopTimer) clearTimeout(stopTimer);
+    stopTimer = null;
+    listening = false;
+    starting = false;
+    setMicUi(false);
   }
 
   function stopVoice() {
     if (stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
-    if (rec && listening) {
-      try { rec.stop(); } catch {}
+    if (recognition && listening) {
+      try { recognition.stop(); } catch {}
+    } else {
+      cleanup();
     }
   }
 
-  function startVoiceStable() {
+  async function requestMicPermission() {
+    if (!navigator.mediaDevices?.getUserMedia) return true;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return true;
+    } catch (err) {
+      const name = err?.name || '';
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        toast('El navegador tiene bloqueado el micrófono para CreativeOS. Permítelo en el candado de la barra de direcciones.', 'error');
+      } else {
+        toast('No he podido abrir el micrófono.', 'error');
+      }
+      return false;
+    } finally {
+      try { stream?.getTracks().forEach(t => t.stop()); } catch {}
+    }
+  }
+
+  async function startVoiceStable() {
     if (listening) {
       stopVoice();
       return;
     }
+    if (starting) return;
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    window.CreativeOSRunner?.open?.();
-
     if (!SR) {
-      toast('Este navegador no admite transcripción directa. Usa el dictado del sistema dentro del campo Brief.', 'warn');
+      window.CreativeOSRunner?.open?.();
+      toast('Este navegador no admite transcripción directa. El campo Brief sigue disponible para dictado del sistema.', 'warn');
       setTimeout(() => document.querySelector('#coRunnerComposer [data-co-brief]')?.focus(), 0);
       return;
     }
 
+    starting = true;
+    setMicUi(false);
+    const allowed = await requestMicPermission();
+    if (!allowed) {
+      cleanup();
+      return;
+    }
+
     previousBrief = getBrief();
-    transcript = '';
-    setDraftUi('');
+    finalTranscript = '';
+    recognition = new SR();
+    recognition.lang = 'es-ES';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-    rec = new SR();
-    rec.lang = 'es-ES';
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.maxAlternatives = 1;
-
-    rec.onstart = () => {
+    recognition.onstart = () => {
+      starting = false;
       listening = true;
-      setMicUi(true);
-      stopTimer = setTimeout(() => stopVoice(), 60000);
+      setMicUi(true, 'Escuchando… habla ahora');
+      stopTimer = setTimeout(() => stopVoice(), 30000);
     };
 
-    rec.onresult = event => {
-      let finalText = '';
-      let interimText = '';
-      for (let i = 0; i < event.results.length; i++) {
-        const text = event.results[i][0]?.transcript || '';
-        if (event.results[i].isFinal) finalText += text + ' ';
-        else interimText += text;
+    recognition.onresult = event => {
+      const parts = [];
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0]?.transcript?.trim();
+        if (text) parts.push(text);
       }
-      transcript = `${finalText}${interimText}`.trim();
-      setDraftUi(transcript);
-      const status = document.getElementById('coVoiceStatus');
-      if (status) status.textContent = transcript ? 'Escuchando… ya te estoy transcribiendo' : 'Escuchando… habla normal';
+      if (parts.length) finalTranscript = [finalTranscript, ...parts].filter(Boolean).join(' ').trim();
+      setMicUi(true, finalTranscript ? 'Perfecto, terminando…' : 'Escuchando…');
     };
 
-    rec.onerror = event => {
-      if (stopTimer) clearTimeout(stopTimer);
-      stopTimer = null;
-      listening = false;
-      setMicUi(false);
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setDraftUi(previousBrief);
-        toast('Necesitas permitir el micrófono para esta web en el navegador.', 'error');
-      } else if (event.error === 'no-speech') {
-        setDraftUi(previousBrief);
-        toast('No he detectado voz. Pulsa el micro y vuelve a hablar.', 'warn');
-      } else if (event.error !== 'aborted') {
-        setDraftUi(previousBrief);
-        toast('El dictado falló. Puedes volver a pulsar el micro sin recargar la app.', 'error');
+    recognition.onerror = event => {
+      const error = event?.error || 'unknown';
+      cleanup();
+      setDraftUi(previousBrief);
+      if (error === 'not-allowed' || error === 'service-not-allowed') {
+        toast('Permite el micrófono para esta web en Chrome y vuelve a pulsar.', 'error');
+      } else if (error === 'no-speech') {
+        toast('No he detectado voz. Vuelve a pulsar y habla justo después.', 'warn');
+      } else if (error !== 'aborted') {
+        toast(`El reconocimiento de voz falló (${error}).`, 'error');
       }
     };
 
-    rec.onend = () => {
-      if (stopTimer) clearTimeout(stopTimer);
-      stopTimer = null;
-      const wasListening = listening;
-      listening = false;
-      setMicUi(false);
-      if (wasListening || transcript.trim()) commitTranscript();
+    recognition.onend = () => {
+      const hadText = finalTranscript.trim().length > 0;
+      cleanup();
+      if (hadText) commitTranscript();
     };
 
     try {
-      rec.start();
-    } catch {
-      listening = false;
-      setMicUi(false);
-      setDraftUi(previousBrief);
-      toast('No se pudo iniciar el micrófono. Vuelve a intentarlo.', 'error');
+      recognition.start();
+    } catch (err) {
+      cleanup();
+      toast('No se pudo iniciar el dictado. Vuelve a pulsar una vez.', 'error');
     }
   }
 
