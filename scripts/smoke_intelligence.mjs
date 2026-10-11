@@ -1,0 +1,112 @@
+import http from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { extname, join, normalize } from 'node:path';
+
+const ROOT=process.cwd();
+const PORT=5199;
+const CDP_PORT=9222;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml'};
+const server=http.createServer(async(req,res)=>{
+  try{
+    const raw=(req.url||'/').split('?')[0];
+    const rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
+    const file=normalize(join(ROOT,rel));
+    if(!file.startsWith(ROOT)){res.writeHead(403);return res.end('forbidden');}
+    const st=await stat(file);
+    if(!st.isFile())throw new Error('not file');
+    const data=await readFile(file);
+    res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
+  }catch{res.writeHead(404);res.end('not found');}
+});
+await new Promise((resolve,reject)=>server.listen(PORT,'127.0.0.1',err=>err?reject(err):resolve()));
+
+const chromeCandidates=['google-chrome','google-chrome-stable','chromium','chromium-browser'];
+let chrome=null;
+for(const cmd of chromeCandidates){
+  const p=spawn('sh',['-lc',`command -v ${cmd}`]);
+  let out='';p.stdout.on('data',d=>out+=d);await new Promise(r=>p.on('close',r));
+  if(out.trim()){chrome=out.trim();break;}
+}
+if(!chrome){server.close();throw new Error('Chrome/Chromium not found on runner');}
+
+const proc=spawn(chrome,[
+  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+  `--remote-debugging-port=${CDP_PORT}`,'--remote-allow-origins=*',
+  '--user-data-dir=/tmp/creativeos-smoke-chrome','about:blank'
+],{stdio:['ignore','ignore','pipe']});
+let chromeErr='';proc.stderr.on('data',d=>chromeErr+=d);
+
+async function waitJson(url,attempts=80){
+  for(let i=0;i<attempts;i++){
+    try{const r=await fetch(url);if(r.ok)return await r.json();}catch{}
+    await sleep(250);
+  }
+  throw new Error(`Timed out waiting for ${url}\n${chromeErr.slice(-1500)}`);
+}
+
+const version=await waitJson(`http://127.0.0.1:${CDP_PORT}/json/version`);
+const targetResp=await fetch(`http://127.0.0.1:${CDP_PORT}/json/new?${encodeURIComponent(`http://localhost:${PORT}/`)}`,{method:'PUT'});
+if(!targetResp.ok)throw new Error(`Could not create Chrome target: ${targetResp.status}`);
+const target=await targetResp.json();
+const ws=new WebSocket(target.webSocketDebuggerUrl||version.webSocketDebuggerUrl);
+await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true});});
+let seq=0;const pending=new Map();
+ws.addEventListener('message',ev=>{const msg=JSON.parse(ev.data);if(msg.id&&pending.has(msg.id)){const {resolve,reject}=pending.get(msg.id);pending.delete(msg.id);if(msg.error)reject(new Error(JSON.stringify(msg.error)));else resolve(msg.result);}});
+function cdp(method,params={}){return new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(pending.has(id)){pending.delete(id);reject(new Error(`CDP timeout: ${method}`));}},10000);});}
+async function evalJS(expression){const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(`Browser exception: ${r.exceptionDetails.text}`);return r.result?.value;}
+async function waitFor(expression,label,attempts=100){for(let i=0;i<attempts;i++){try{if(await evalJS(expression))return;}catch{}await sleep(150);}throw new Error(`UI smoke timeout: ${label}`);}
+async function click(expression,label){const ok=await evalJS(`(()=>{const el=${expression};if(!el)return false;el.click();return true})()`);if(!ok)throw new Error(`Could not click ${label}`);await sleep(120);}
+
+try{
+  await cdp('Page.enable');await cdp('Runtime.enable');
+  await waitFor(`document.readyState==='complete' || document.readyState==='interactive'`,'document ready');
+  await waitFor(`!!window.CreativeOSIntelligence`,'Intelligence core loaded');
+  await waitFor(`!!window.CreativeOSIntelligenceCRUD`,'CRUD layer loaded');
+  await waitFor(`!!window.CreativeOSIntelligence.getSnapshot?.()`,'Supabase snapshot loaded',160);
+
+  // Concepts: add + edit modal must work.
+  await click(`document.querySelector('[data-ci-route="concepts"]')`,'Conceptos+');
+  await waitFor(`!!document.querySelector('[data-cix-add="concept"]')`,'add concept button');
+  await waitFor(`!!document.querySelector('[data-cix-edit="concept"]')`,'edit concept button');
+  await click(`document.querySelector('[data-cix-add="concept"]')`,'add concept');
+  await waitFor(`!!document.querySelector('#cixModalRoot .cix-modal')`,'concept modal');
+  const conceptEditable=await evalJS(`(()=>{const x=document.querySelector('#cixName');if(!x)return false;x.value='Browser smoke';x.dispatchEvent(new Event('input',{bubbles:true}));return x.value==='Browser smoke'})()`);
+  if(!conceptEditable)throw new Error('Concept modal input is not editable');
+  await click(`document.querySelector('#cixModalRoot [data-cix-close]')`,'close concept modal');
+
+  // Niches: selecting Running must change active niche; edit must open.
+  await click(`document.querySelector('[data-ci-route="niches"]')`,'Nichos & Hooks');
+  await waitFor(`!!document.querySelector('[data-ci-niche="running"]')`,'running niche card');
+  await click(`document.querySelector('[data-ci-niche="running"]')`,'running niche card');
+  await waitFor(`document.querySelector('[data-ci-niche="running"]')?.classList.contains('active')`,'running niche selected');
+  await waitFor(`!!document.querySelector('[data-ci-niche="running"] [data-cix-edit="niche"]')`,'niche edit button');
+  await click(`document.querySelector('[data-ci-niche="running"] [data-cix-edit="niche"]')`,'edit niche');
+  await waitFor(`!!document.querySelector('#cixModalRoot .cix-modal')`,'niche modal');
+  await click(`document.querySelector('#cixModalRoot [data-cix-close]')`,'close niche modal');
+
+  // Angles: add and edit controls.
+  await click(`document.querySelector('[data-ci-route="angles"]')`,'Ángulos');
+  await waitFor(`!!document.querySelector('[data-cix-add="angle"]')`,'add angle button');
+  await waitFor(`!!document.querySelector('[data-cix-edit="angle"]')`,'edit angle button');
+  await click(`document.querySelector('[data-cix-add="angle"]')`,'add angle');
+  await waitFor(`!!document.querySelector('#cixModalRoot .cix-modal')`,'angle modal');
+  await click(`document.querySelector('#cixModalRoot [data-cix-close]')`,'close angle modal');
+
+  // Avatars and Learnings must expose real editors too.
+  await click(`document.querySelector('[data-ci-route="avatars"]')`,'Avatares');
+  await waitFor(`!!document.querySelector('[data-cix-add="avatar"]')`,'add avatar button');
+  await click(`document.querySelector('[data-ci-route="learnings"]')`,'Aprendizajes');
+  await waitFor(`!!document.querySelector('[data-cix-add="learning"]')`,'add learning button');
+
+  // Verify the old renderer is not loaded in the actual document.
+  const oldLoaded=await evalJS(`[...document.scripts].some(s=>s.src.includes('creativeos-intelligence.js'))`);
+  if(oldLoaded)throw new Error('Old looping Intelligence renderer is still loaded');
+
+  console.log('CreativeOS Intelligence browser smoke test: PASS');
+} finally {
+  try{ws.close();}catch{}
+  proc.kill('SIGKILL');server.close();
+}
