@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CreativeOS Voice Lab</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#090b10;color:#f5f7fb;display:grid;place-items:center;padding:24px}
+    .card{width:min(760px,100%);background:#111722;border:1px solid #232d3e;border-radius:24px;padding:26px;box-shadow:0 28px 90px rgba(0,0,0,.45)}
+    h1{font-size:24px;margin:0 0 8px}.sub{color:#93a1b7;font-size:14px;line-height:1.5;margin-bottom:22px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    button{border:0;border-radius:14px;padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed}.primary{background:#f6c945;color:#16130a}.stop{background:#e95060;color:#fff}.ghost{background:#1a2230;color:#dce5f3;border:1px solid #2c374a}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:750;background:#171e2a;border:1px solid #2a3445;color:#aebbd0}.dot{width:8px;height:8px;border-radius:50%;background:#68758a}.pill.recording .dot{background:#ff5364;box-shadow:0 0 0 5px rgba(255,83,100,.12)}.pill.ok .dot{background:#47d17a}.pill.warn .dot{background:#f0b84b}
+    textarea{width:100%;min-height:150px;margin-top:18px;background:#0c1119;color:#f4f7fb;border:1px solid #263145;border-radius:16px;padding:15px;font:inherit;resize:vertical;outline:none}textarea:focus{border-color:#b18c28;box-shadow:0 0 0 3px rgba(246,201,69,.09)}
+    .meta{margin-top:14px;color:#8c9ab0;font-size:12px;display:grid;gap:6px}.error{color:#ff9ba8}.success{color:#88e6aa}audio{width:100%;margin-top:16px}.sep{height:1px;background:#202a39;margin:22px 0}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#d3dced}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>CreativeOS · Voice Lab</h1>
+    <div class="sub">Prueba aislada. Esta página no carga CreativeOS, no toca localStorage, no sincroniza contexto y no puede romper la app principal.</div>
+
+    <div class="row">
+      <button id="recordBtn" class="primary">🎙 Grabar brief</button>
+      <button id="stopBtn" class="stop" disabled>■ Terminar</button>
+      <span id="status" class="pill"><span class="dot"></span><span>Comprobando backend…</span></span>
+      <span id="timer" class="pill">00:00</span>
+    </div>
+
+    <audio id="preview" controls hidden></audio>
+    <textarea id="text" placeholder="Aquí aparecerá la transcripción. También puedes editarla manualmente."></textarea>
+
+    <div class="row" style="margin-top:12px">
+      <button id="transcribeBtn" class="ghost" disabled>Transcribir otra vez</button>
+      <button id="clearBtn" class="ghost">Limpiar</button>
+    </div>
+
+    <div class="meta" id="meta"></div>
+    <div class="sep"></div>
+    <div class="meta">
+      <div><strong>Flujo:</strong> MediaRecorder → archivo temporal → Supabase Edge Function → OpenAI <code>gpt-transcribe</code> → texto.</div>
+      <div>El audio solo vive en memoria en esta página. Al recargar, desaparece.</div>
+    </div>
+  </main>
+
+<script>
+(() => {
+  const SUPABASE_URL = 'https://naiglzmqpgucfbwfbvxt.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_h883eAMdoF8IYcPunFFCVQ_SCB42SMf';
+  const ENDPOINT = `${SUPABASE_URL}/functions/v1/transcribe-brief`;
+  const LAB_HEADER = '2026-voice-v1';
+  const MAX_MS = 60000;
+
+  const recordBtn = document.getElementById('recordBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const transcribeBtn = document.getElementById('transcribeBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const status = document.getElementById('status');
+  const timer = document.getElementById('timer');
+  const text = document.getElementById('text');
+  const preview = document.getElementById('preview');
+  const meta = document.getElementById('meta');
+
+  let stream = null;
+  let recorder = null;
+  let chunks = [];
+  let blob = null;
+  let startedAt = 0;
+  let timerId = null;
+  let stopTimer = null;
+  let objectUrl = null;
+  let backendConfigured = false;
+
+  function setStatus(label, mode='') {
+    status.className = `pill ${mode}`.trim();
+    status.querySelector('span:last-child').textContent = label;
+  }
+  function setMeta(message, kind='') {
+    meta.innerHTML = `<div class="${kind}">${message}</div>`;
+  }
+  function fmt(ms) {
+    const sec = Math.max(0, Math.floor(ms/1000));
+    return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+  }
+  function cleanupStream() {
+    if (stream) stream.getTracks().forEach(t => { try { t.stop(); } catch {} });
+    stream = null;
+  }
+  function stopTimers() {
+    clearInterval(timerId); clearTimeout(stopTimer); timerId = null; stopTimer = null;
+  }
+  function chooseMimeType() {
+    const options = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4'
+    ];
+    if (!window.MediaRecorder) return '';
+    for (const type of options) if (MediaRecorder.isTypeSupported?.(type)) return type;
+    return '';
+  }
+  function extensionFor(type='') {
+    if (type.includes('mp4')) return 'm4a';
+    if (type.includes('ogg')) return 'ogg';
+    if (type.includes('wav')) return 'wav';
+    return 'webm';
+  }
+
+  async function checkBackend() {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      setStatus('Navegador sin MediaRecorder', 'warn');
+      recordBtn.disabled = true;
+      return;
+    }
+    try {
+      const res = await fetch(ENDPOINT, { headers: { 'apikey': SUPABASE_KEY, 'x-creativeos-lab': LAB_HEADER } });
+      const data = await res.json().catch(() => ({}));
+      backendConfigured = !!data.configured;
+      if (res.ok && backendConfigured) {
+        setStatus(`Backend listo · ${data.model || 'gpt-transcribe'}`, 'ok');
+        setMeta('Grabación y backend disponibles.', 'success');
+      } else if (res.ok) {
+        setStatus('Backend listo · falta API key', 'warn');
+        setMeta('La grabación ya funciona. Falta configurar <code>OPENAI_API_KEY</code> en Supabase para poder transcribir.', 'error');
+      } else {
+        setStatus('Backend no disponible', 'warn');
+        setMeta(`Health check: HTTP ${res.status}`, 'error');
+      }
+    } catch (err) {
+      setStatus('Backend no disponible', 'warn');
+      setMeta(`Health check falló: ${String(err?.message || err)}`, 'error');
+    }
+  }
+
+  async function startRecording() {
+    if (recorder?.state === 'recording') return;
+    recordBtn.disabled = true;
+    text.blur();
+    setMeta('Solicitando acceso al micrófono…');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false
+      });
+      const mimeType = chooseMimeType();
+      chunks = [];
+      recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      recorder.addEventListener('dataavailable', event => {
+        if (event.data && event.data.size > 0) chunks.push(event.data);
+      });
+      recorder.addEventListener('stop', onStopped, { once: true });
+      recorder.addEventListener('error', event => {
+        stopTimers(); cleanupStream();
+        setStatus('Error de grabación', 'warn');
+        setMeta(`MediaRecorder: ${event.error?.message || 'error desconocido'}`, 'error');
+        recordBtn.disabled = false; stopBtn.disabled = true;
+      }, { once: true });
+
+      recorder.start(1000);
+      startedAt = Date.now();
+      timer.textContent = '00:00';
+      timerId = setInterval(() => timer.textContent = fmt(Date.now() - startedAt), 250);
+      stopTimer = setTimeout(stopRecording, MAX_MS);
+      setStatus('Grabando…', 'recording');
+      setMeta(`Formato: <code>${recorder.mimeType || 'automático'}</code>`);
+      stopBtn.disabled = false;
+    } catch (err) {
+      cleanupStream();
+      const name = err?.name || 'Error';
+      const message = name === 'NotAllowedError'
+        ? 'El navegador ha bloqueado el micrófono. Permite el acceso para esta web y vuelve a probar.'
+        : name === 'NotFoundError'
+          ? 'No se ha encontrado ningún micrófono disponible.'
+          : `${name}: ${err?.message || err}`;
+      setStatus('Micrófono no disponible', 'warn');
+      setMeta(message, 'error');
+      recordBtn.disabled = false;
+    }
+  }
+
+  function stopRecording() {
+    if (!recorder || recorder.state !== 'recording') return;
+    stopBtn.disabled = true;
+    setStatus('Preparando audio…');
+    try { recorder.stop(); } catch {}
+  }
+
+  async function onStopped() {
+    stopTimers(); cleanupStream();
+    const type = recorder?.mimeType || chunks[0]?.type || 'audio/webm';
+    blob = new Blob(chunks, { type });
+    chunks = [];
+    recorder = null;
+    recordBtn.disabled = false;
+    transcribeBtn.disabled = !blob.size;
+    timer.textContent = fmt(Date.now() - startedAt);
+
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(blob);
+    preview.src = objectUrl;
+    preview.hidden = false;
+    setMeta(`Audio listo · ${(blob.size/1024).toFixed(1)} KB · <code>${blob.type || 'sin tipo'}</code>`);
+
+    if (!blob.size) {
+      setStatus('Audio vacío', 'warn');
+      return;
+    }
+    await transcribe();
+  }
+
+  async function transcribe() {
+    if (!blob?.size) return;
+    transcribeBtn.disabled = true;
+    recordBtn.disabled = true;
+    setStatus('Transcribiendo…');
+    setMeta('Enviando archivo temporal al backend…');
+
+    const ext = extensionFor(blob.type);
+    const file = new File([blob], `creativeos-brief-${Date.now()}.${ext}`, { type: blob.type || 'audio/webm' });
+    const form = new FormData();
+    form.append('audio', file);
+
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'x-creativeos-lab': LAB_HEADER },
+        body: form
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.error === 'transcription_not_configured'
+          ? 'Falta configurar OPENAI_API_KEY en Supabase.'
+          : `${data.error || 'error'} · HTTP ${res.status}`;
+        throw new Error(detail);
+      }
+      text.value = data.text || '';
+      setStatus('Transcripción lista', 'ok');
+      setMeta(`Modelo: <code>${data.model || 'gpt-transcribe'}</code> · ${text.value.length} caracteres`, 'success');
+    } catch (err) {
+      setStatus('No se pudo transcribir', 'warn');
+      setMeta(String(err?.message || err), 'error');
+    } finally {
+      transcribeBtn.disabled = false;
+      recordBtn.disabled = false;
+    }
+  }
+
+  function clearAll() {
+    if (recorder?.state === 'recording') stopRecording();
+    blob = null; chunks = []; text.value = ''; preview.hidden = true; preview.removeAttribute('src');
+    if (objectUrl) URL.revokeObjectURL(objectUrl); objectUrl = null;
+    transcribeBtn.disabled = true; timer.textContent = '00:00';
+    setMeta('Limpio. Puedes grabar otra prueba.');
+    setStatus(backendConfigured ? 'Backend listo' : 'Backend listo · falta API key', backendConfigured ? 'ok' : 'warn');
+  }
+
+  recordBtn.addEventListener('click', startRecording);
+  stopBtn.addEventListener('click', stopRecording);
+  transcribeBtn.addEventListener('click', transcribe);
+  clearBtn.addEventListener('click', clearAll);
+  window.addEventListener('beforeunload', () => { stopTimers(); cleanupStream(); if (objectUrl) URL.revokeObjectURL(objectUrl); });
+
+  checkBackend();
+})();
+</script>
+</body>
+</html>
