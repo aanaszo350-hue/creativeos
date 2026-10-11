@@ -25,7 +25,7 @@ css_link = '<link rel="stylesheet" href="./creativeos-enhancements.css?v=3" />'
 ux_css_link = '<link rel="stylesheet" href="./creativeos-ux-v4.css?v=1" />'
 cloud_js_link = '<script src="./creativeos-cloud.js?v=2"></script>'
 runner_js_link = '<script src="./creativeos-generation.js?v=1"></script>'
-voice_hotfix_link = '<script src="./creativeos-voice-hotfix.js?v=1"></script>'
+voice_hotfix_link = '<script src="./creativeos-voice-hotfix.js?v=2"></script>'
 if css_link not in s:
     s = s.replace('</head>', '  ' + css_link + '\n</head>')
 if ux_css_link not in s:
@@ -59,7 +59,7 @@ checks = {
     'workflow center': 'creativeos-ux-v4.js?v=1' in s,
     'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
     'voice generation runner': 'creativeos-generation.js?v=1' in s,
-    'stable voice hotfix': 'creativeos-voice-hotfix.js?v=1' in s,
+    'stable voice hotfix': 'creativeos-voice-hotfix.js?v=2' in s,
     'editable sales angles': 'data-action="add-sales-angle"' in s and 'data-action="edit-sales-angle"' in s,
     'manual tested concepts': 'data-action="add-tested-concept"' in s,
     'delete controls': 'data-action="delete-asset"' in s and 'data-action="delete-avatar"' in s,
