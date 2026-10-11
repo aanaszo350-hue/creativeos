@@ -28,6 +28,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: Validate Intelligence JavaScript
+        run: node --check creativeos-intelligence.js
       - name: Build production index
         run: python3 scripts/build_unified_v2.py
       - name: Validate production index
