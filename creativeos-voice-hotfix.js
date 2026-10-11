@@ -2,208 +2,138 @@
   const STORAGE_KEY = 'creativeos_local_v3';
   let recognition = null;
   let listening = false;
-  let previousBrief = '';
-  let finalTranscript = '';
-  let stopTimer = null;
-  let starting = false;
+  let timeoutId = null;
 
-  function loadState() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-    catch { return {}; }
+  function loadState(){
+    try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');}
+    catch{return {};}
   }
 
-  function getBrief() {
-    return (loadState().context?.instruction || '').trim();
-  }
-
-  function setDraftUi(value) {
-    document.querySelectorAll('[data-co-brief], #homeContextInstruction, #contextInstruction').forEach(el => {
-      if ('value' in el) el.value = value;
+  function saveBrief(value){
+    const state=loadState();
+    state.context=state.context||{};
+    state.context.instruction=value;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    document.querySelectorAll('[data-co-brief],#homeContextInstruction,#contextInstruction').forEach(el=>{
+      if('value' in el) el.value=value;
     });
+    try{window.CreativeOSCloud?.syncNow?.();}catch{}
   }
 
-  function toast(message, tone = 'default') {
-    let wrap = document.getElementById('coVoiceHotfixToasts');
-    if (!wrap) {
-      wrap = document.createElement('div');
-      wrap.id = 'coVoiceHotfixToasts';
-      wrap.style.cssText = 'position:fixed;right:22px;top:88px;z-index:10001;display:grid;gap:8px';
+  function toast(message,tone='default'){
+    let wrap=document.getElementById('coVoiceSafeToasts');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id='coVoiceSafeToasts';
+      wrap.style.cssText='position:fixed;right:22px;top:88px;z-index:10010;display:grid;gap:8px;pointer-events:none';
       document.body.appendChild(wrap);
     }
-    const el = document.createElement('div');
-    el.textContent = message;
-    const border = tone === 'error' ? '#813544' : tone === 'ok' ? '#1f7048' : '#6b5521';
-    const color = tone === 'error' ? '#ffbac3' : tone === 'ok' ? '#aef0c9' : '#f2d486';
-    el.style.cssText = `max-width:330px;padding:10px 12px;border-radius:11px;background:#111722;border:1px solid ${border};color:${color};font-size:11px;box-shadow:0 14px 45px rgba(0,0,0,.35)`;
+    const el=document.createElement('div');
+    const border=tone==='error'?'#813544':tone==='ok'?'#1f7048':'#6b5521';
+    const color=tone==='error'?'#ffbac3':tone==='ok'?'#aef0c9':'#f2d486';
+    el.textContent=message;
+    el.style.cssText=`max-width:340px;padding:10px 12px;border-radius:11px;background:#111722;border:1px solid ${border};color:${color};font-size:11px;box-shadow:0 14px 45px rgba(0,0,0,.35)`;
     wrap.appendChild(el);
-    setTimeout(() => el.remove(), 3600);
+    setTimeout(()=>el.remove(),3200);
   }
 
-  function ensureStatusPill() {
-    let pill = document.getElementById('coVoiceFloatingStatus');
-    if (!pill) {
-      pill = document.createElement('div');
-      pill.id = 'coVoiceFloatingStatus';
-      pill.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:10002;padding:10px 14px;border-radius:999px;background:#2a1116;border:1px solid #ff5b69;color:#ffd8dc;font-size:12px;font-weight:800;box-shadow:0 18px 55px rgba(0,0,0,.4);display:none;align-items:center;gap:9px';
-      pill.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#ff5364;box-shadow:0 0 0 5px rgba(255,83,100,.13)"></span><span>Escuchando…</span>';
-      document.body.appendChild(pill);
+  function overlay(show,text='Escuchando…'){
+    let el=document.getElementById('coVoiceSafeOverlay');
+    if(!el){
+      el=document.createElement('div');
+      el.id='coVoiceSafeOverlay';
+      el.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:10011;padding:11px 16px;border-radius:999px;background:#261015;border:1px solid #ff5b69;color:#ffd9dd;font-size:12px;font-weight:850;box-shadow:0 18px 55px rgba(0,0,0,.45);display:none;align-items:center;gap:9px;pointer-events:none';
+      el.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:#ff5364;box-shadow:0 0 0 5px rgba(255,83,100,.13)"></span><span></span>';
+      document.body.appendChild(el);
     }
-    return pill;
+    el.style.display=show?'flex':'none';
+    const label=el.querySelector('span:last-child');
+    if(label) label.textContent=text;
   }
 
-  function setMicUi(on, label = 'Escuchando…') {
-    document.querySelectorAll('.co-inline-mic[data-co-mic]').forEach(btn => {
-      btn.classList.toggle('listening', on);
-      btn.textContent = on ? '■' : '🎙';
-      btn.title = on ? 'Parar' : 'Hablar';
-      btn.disabled = starting && !on;
-    });
-    document.querySelectorAll('.co-mic[data-co-mic]').forEach(btn => {
-      btn.classList.toggle('listening', on);
-      btn.innerHTML = on ? '<span class="co-rec-dot"></span> Parar' : '🎙 Hablar';
-      btn.disabled = starting && !on;
-    });
-    const status = document.getElementById('coVoiceStatus');
-    if (status) status.textContent = on ? label : (starting ? 'Preparando micrófono…' : 'Listo para dictar');
-    const pill = ensureStatusPill();
-    pill.style.display = on ? 'flex' : 'none';
-    const text = pill.querySelector('span:last-child');
-    if (text) text.textContent = label;
+  function finish(){
+    if(timeoutId){clearTimeout(timeoutId);timeoutId=null;}
+    listening=false;
+    recognition=null;
+    overlay(false);
   }
 
-  function commitTranscript() {
-    const value = finalTranscript.trim();
-    if (!value) {
-      setDraftUi(previousBrief);
-      toast('No he detectado una frase completa. Vuelve a pulsar y habla normal.', 'warn');
-      return;
-    }
-    window.CreativeOSRunner?.setBrief?.(value);
-    setDraftUi(value);
-    window.CreativeOSRunner?.open?.();
-    toast('Brief de voz guardado.', 'ok');
+  function stop(){
+    if(!recognition)return;
+    try{recognition.stop();}catch{finish();}
   }
 
-  function cleanup() {
-    if (stopTimer) clearTimeout(stopTimer);
-    stopTimer = null;
-    listening = false;
-    starting = false;
-    setMicUi(false);
-  }
+  function start(){
+    if(listening){stop();return;}
 
-  function stopVoice() {
-    if (stopTimer) clearTimeout(stopTimer);
-    stopTimer = null;
-    if (recognition && listening) {
-      try { recognition.stop(); } catch {}
-    } else {
-      cleanup();
-    }
-  }
-
-  async function requestMicPermission() {
-    if (!navigator.mediaDevices?.getUserMedia) return true;
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      return true;
-    } catch (err) {
-      const name = err?.name || '';
-      if (name === 'NotAllowedError' || name === 'SecurityError') {
-        toast('El navegador tiene bloqueado el micrófono para CreativeOS. Permítelo en el candado de la barra de direcciones.', 'error');
-      } else {
-        toast('No he podido abrir el micrófono.', 'error');
-      }
-      return false;
-    } finally {
-      try { stream?.getTracks().forEach(t => t.stop()); } catch {}
-    }
-  }
-
-  async function startVoiceStable() {
-    if (listening) {
-      stopVoice();
-      return;
-    }
-    if (starting) return;
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      window.CreativeOSRunner?.open?.();
-      toast('Este navegador no admite transcripción directa. El campo Brief sigue disponible para dictado del sistema.', 'warn');
-      setTimeout(() => document.querySelector('#coRunnerComposer [data-co-brief]')?.focus(), 0);
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){
+      try{window.CreativeOSRunner?.open?.();}catch{}
+      toast('Este navegador no permite dictado web directo. Usa el dictado del Mac dentro de Brief.','warn');
+      setTimeout(()=>document.querySelector('#coRunnerComposer [data-co-brief]')?.focus(),50);
       return;
     }
 
-    starting = true;
-    setMicUi(false);
-    const allowed = await requestMicPermission();
-    if (!allowed) {
-      cleanup();
-      return;
-    }
+    let resultText='';
+    recognition=new SR();
+    recognition.lang='es-ES';
+    recognition.continuous=false;
+    recognition.interimResults=false;
+    recognition.maxAlternatives=1;
 
-    previousBrief = getBrief();
-    finalTranscript = '';
-    recognition = new SR();
-    recognition.lang = 'es-ES';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      starting = false;
-      listening = true;
-      setMicUi(true, 'Escuchando… habla ahora');
-      stopTimer = setTimeout(() => stopVoice(), 30000);
+    recognition.onstart=()=>{
+      listening=true;
+      overlay(true,'Escuchando… habla ahora');
+      timeoutId=setTimeout(()=>stop(),20000);
     };
 
-    recognition.onresult = event => {
-      const parts = [];
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const text = event.results[i][0]?.transcript?.trim();
-        if (text) parts.push(text);
+    recognition.onresult=(event)=>{
+      const parts=[];
+      for(let i=event.resultIndex;i<event.results.length;i++){
+        const text=event.results[i]?.[0]?.transcript?.trim();
+        if(text)parts.push(text);
       }
-      if (parts.length) finalTranscript = [finalTranscript, ...parts].filter(Boolean).join(' ').trim();
-      setMicUi(true, finalTranscript ? 'Perfecto, terminando…' : 'Escuchando…');
+      resultText=parts.join(' ').trim();
+      overlay(true,'Hecho · guardando brief');
     };
 
-    recognition.onerror = event => {
-      const error = event?.error || 'unknown';
-      cleanup();
-      setDraftUi(previousBrief);
-      if (error === 'not-allowed' || error === 'service-not-allowed') {
-        toast('Permite el micrófono para esta web en Chrome y vuelve a pulsar.', 'error');
-      } else if (error === 'no-speech') {
-        toast('No he detectado voz. Vuelve a pulsar y habla justo después.', 'warn');
-      } else if (error !== 'aborted') {
-        toast(`El reconocimiento de voz falló (${error}).`, 'error');
+    recognition.onerror=(event)=>{
+      const err=event?.error||'unknown';
+      finish();
+      if(err==='not-allowed'||err==='service-not-allowed'){
+        toast('Chrome tiene bloqueado el micrófono para esta web. Actívalo en el candado de la barra.','error');
+      }else if(err==='no-speech'){
+        toast('No he detectado voz. Pulsa el micro y habla justo después.','warn');
+      }else if(err!=='aborted'){
+        toast(`No se pudo usar el dictado (${err}).`,'error');
       }
     };
 
-    recognition.onend = () => {
-      const hadText = finalTranscript.trim().length > 0;
-      cleanup();
-      if (hadText) commitTranscript();
+    recognition.onend=()=>{
+      const text=resultText.trim();
+      finish();
+      if(text){
+        saveBrief(text);
+        toast('Brief de voz guardado.','ok');
+      }
     };
 
-    try {
-      recognition.start();
-    } catch (err) {
-      cleanup();
-      toast('No se pudo iniciar el dictado. Vuelve a pulsar una vez.', 'error');
+    try{recognition.start();}
+    catch{
+      finish();
+      toast('No se pudo iniciar el micrófono. Vuelve a pulsar una vez.','error');
     }
   }
 
-  document.addEventListener('click', event => {
-    const mic = event.target.closest('[data-co-mic]');
-    if (!mic) return;
+  document.addEventListener('click',event=>{
+    const mic=event.target.closest('[data-co-mic]');
+    if(!mic)return;
     event.preventDefault();
+    event.stopPropagation();
     event.stopImmediatePropagation();
-    startVoiceStable();
-  }, true);
+    start();
+  },true);
 
-  window.addEventListener('beforeunload', stopVoice);
-  window.CreativeOSVoice = { start: startVoiceStable, stop: stopVoice };
+  window.addEventListener('beforeunload',stop);
+  window.CreativeOSVoice={start,stop};
 })();
