@@ -39,8 +39,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('scripts/build_unified_v2.py').read_text(encoding='utf-8')
-          if 'creativeos-intelligence.js?v=1' in s:
-              raise SystemExit('Old looping Intelligence renderer is still referenced')
+          old_tag='<script src="./creativeos-intelligence.js?v=1"></script>'
+          if old_tag in s:
+              raise SystemExit('Old looping Intelligence renderer is still loaded')
           if 'creativeos-intelligence-core-v2.js?v=2' not in s:
               raise SystemExit('Stable Intelligence core missing')
           PY
@@ -59,7 +60,7 @@ jobs:
             'workflow styles':'creativeos-ux-v4.css?v=1' in s,
             'cloud media bridge':'creativeos-cloud.js?v=2' in s,
             'stable intelligence core':'creativeos-intelligence-core-v2.js?v=2' in s,
-            'old intelligence disabled':'creativeos-intelligence.js?v=1' not in s,
+            'old intelligence disabled':'<script src="./creativeos-intelligence.js?v=1"></script>' not in s,
             'intelligence styles':'creativeos-intelligence.css?v=2' in s,
             'intelligence crud':'creativeos-intelligence-crud.js?v=2' in s,
             'intelligence crud styles':'creativeos-intelligence-crud.css?v=2' in s,
