@@ -57,7 +57,7 @@ let seq=0;const pending=new Map();
 ws.addEventListener('message',ev=>{const msg=JSON.parse(ev.data);if(msg.id&&pending.has(msg.id)){const {resolve,reject}=pending.get(msg.id);pending.delete(msg.id);if(msg.error)reject(new Error(JSON.stringify(msg.error)));else resolve(msg.result);}});
 function cdp(method,params={}){return new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(pending.has(id)){pending.delete(id);reject(new Error(`CDP timeout: ${method}`));}},10000);});}
 async function evalJS(expression){const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(`Browser exception: ${r.exceptionDetails.text}`);return r.result?.value;}
-async function waitFor(expression,label,attempts=100){for(let i=0;i<attempts;i++){try{if(await evalJS(expression))return;}catch{}await sleep(150);}throw new Error(`UI smoke timeout: ${label}`);}
+async function waitFor(expression,label,attempts=100){for(let i=0;i<attempts;i++){try{if(await evalJS(expression))return;}catch{}await sleep(150);}const diag=await evalJS(`({body:document.body?.innerText?.slice(0,1200),errors:[...document.querySelectorAll('.ci-error')].map(x=>x.textContent)})`).catch(()=>null);throw new Error(`UI smoke timeout: ${label}\n${JSON.stringify(diag)}`);}
 async function click(expression,label){const ok=await evalJS(`(()=>{const el=${expression};if(!el)return false;el.click();return true})()`);if(!ok)throw new Error(`Could not click ${label}`);await sleep(120);}
 
 try{
@@ -65,29 +65,32 @@ try{
   await waitFor(`document.readyState==='complete' || document.readyState==='interactive'`,'document ready');
   await waitFor(`!!window.CreativeOSIntelligence`,'Intelligence core loaded');
   await waitFor(`!!window.CreativeOSIntelligenceCRUD`,'CRUD layer loaded');
+
+  // Opening the first Intelligence view is what intentionally loads the Supabase snapshot.
+  await click(`document.querySelector('[data-ci-route="concepts"]')`,'Conceptos+');
   await waitFor(`!!window.CreativeOSIntelligence.getSnapshot?.()`,'Supabase snapshot loaded',160);
 
-  // Concepts: add + edit modal must work.
-  await click(`document.querySelector('[data-ci-route="concepts"]')`,'Conceptos+');
+  // Concepts: add + edit modal must work and text fields must really accept input.
   await waitFor(`!!document.querySelector('[data-cix-add="concept"]')`,'add concept button');
   await waitFor(`!!document.querySelector('[data-cix-edit="concept"]')`,'edit concept button');
   await click(`document.querySelector('[data-cix-add="concept"]')`,'add concept');
   await waitFor(`!!document.querySelector('#cixModalRoot .cix-modal')`,'concept modal');
-  const conceptEditable=await evalJS(`(()=>{const x=document.querySelector('#cixName');if(!x)return false;x.value='Browser smoke';x.dispatchEvent(new Event('input',{bubbles:true}));return x.value==='Browser smoke'})()`);
+  const conceptEditable=await evalJS(`(()=>{const x=document.querySelector('#cixName');if(!x)return false;x.focus();x.value='Browser smoke';x.dispatchEvent(new Event('input',{bubbles:true}));return document.activeElement===x && x.value==='Browser smoke'})()`);
   if(!conceptEditable)throw new Error('Concept modal input is not editable');
   await click(`document.querySelector('#cixModalRoot [data-cix-close]')`,'close concept modal');
 
-  // Niches: selecting Running must change active niche; edit must open.
+  // Niches: selecting Running must change state; its edit control must open a modal.
   await click(`document.querySelector('[data-ci-route="niches"]')`,'Nichos & Hooks');
   await waitFor(`!!document.querySelector('[data-ci-niche="running"]')`,'running niche card');
   await click(`document.querySelector('[data-ci-niche="running"]')`,'running niche card');
   await waitFor(`document.querySelector('[data-ci-niche="running"]')?.classList.contains('active')`,'running niche selected');
+  await waitFor(`sessionStorage.getItem('creativeos_ci_niche')==='running'`,'running niche state persisted');
   await waitFor(`!!document.querySelector('[data-ci-niche="running"] [data-cix-edit="niche"]')`,'niche edit button');
   await click(`document.querySelector('[data-ci-niche="running"] [data-cix-edit="niche"]')`,'edit niche');
   await waitFor(`!!document.querySelector('#cixModalRoot .cix-modal')`,'niche modal');
   await click(`document.querySelector('#cixModalRoot [data-cix-close]')`,'close niche modal');
 
-  // Angles: add and edit controls.
+  // Angles: add and edit controls must survive rendering.
   await click(`document.querySelector('[data-ci-route="angles"]')`,'Ángulos');
   await waitFor(`!!document.querySelector('[data-cix-add="angle"]')`,'add angle button');
   await waitFor(`!!document.querySelector('[data-cix-edit="angle"]')`,'edit angle button');
@@ -101,8 +104,8 @@ try{
   await click(`document.querySelector('[data-ci-route="learnings"]')`,'Aprendizajes');
   await waitFor(`!!document.querySelector('[data-cix-add="learning"]')`,'add learning button');
 
-  // Verify the old renderer is not loaded in the actual document.
-  const oldLoaded=await evalJS(`[...document.scripts].some(s=>s.src.includes('creativeos-intelligence.js'))`);
+  // Verify the renderer that caused the DOM loop is not loaded.
+  const oldLoaded=await evalJS(`[...document.scripts].some(s=>s.src.includes('/creativeos-intelligence.js'))`);
   if(oldLoaded)throw new Error('Old looping Intelligence renderer is still loaded');
 
   console.log('CreativeOS Intelligence browser smoke test: PASS');
