@@ -7,6 +7,7 @@ on:
       - 'base.html'
       - 'creativeos-cloud.js'
       - 'creativeos-generation.js'
+      - 'creativeos-voice-hotfix.js'
       - 'creativeos-enhancements.css'
       - 'creativeos-enhancements.js'
       - 'creativeos-ux-v4.css'
@@ -42,6 +43,7 @@ jobs:
             'workflow styles':'creativeos-ux-v4.css?v=1' in s,
             'cloud media bridge':'creativeos-cloud.js?v=2' in s,
             'voice generation runner':'creativeos-generation.js?v=1' in s,
+            'stable voice hotfix':'creativeos-voice-hotfix.js?v=1' in s,
             'concept editor shell':'id="conceptEditor"' in s,
             'bridge schema':Path('creativeos-bridge-schema.json').exists(),
             'sales angles tab':'Ángulos de venta probados' in s,
