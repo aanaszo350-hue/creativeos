@@ -36,7 +36,7 @@
   function area(id,value='',placeholder=''){return `<textarea class="cix-area" id="${id}" placeholder="${esc(placeholder)}">${esc(value??'')}</textarea>`;}
   function openModal({title,sub='',body,entity,key='',isNew=false}){
     const root=ensureModal();
-    root.innerHTML=`<div class="cix-backdrop" data-cix-close><div class="cix-modal" role="dialog" aria-modal="true"><div class="cix-head"><div><h3>${esc(title)}</h3><p>${esc(sub)}</p></div><button class="cix-x" data-cix-close>×</button></div><div class="cix-body">${body}</div><div class="cix-foot"><button class="cix-btn" data-cix-close>Cancelar</button>${!isNew?`<button class="cix-btn danger" data-cix-delete="${entity}" data-cix-key="${esc(key)}">Eliminar</button>`:''}<button class="cix-btn primary" data-cix-save="${entity}" data-cix-key="${esc(key)}" data-cix-new="${isNew?'1':'0'}">Guardar</button></div></div></div>`;
+    root.innerHTML=`<div class="cix-backdrop"><div class="cix-modal" role="dialog" aria-modal="true"><div class="cix-head"><div><h3>${esc(title)}</h3><p>${esc(sub)}</p></div><button class="cix-x" data-cix-close>×</button></div><div class="cix-body">${body}</div><div class="cix-foot"><button class="cix-btn" data-cix-close>Cancelar</button>${!isNew?`<button class="cix-btn danger" data-cix-delete="${entity}" data-cix-key="${esc(key)}">Eliminar</button>`:''}<button class="cix-btn primary" data-cix-save="${entity}" data-cix-key="${esc(key)}" data-cix-new="${isNew?'1':'0'}">Guardar</button></div></div></div>`;
   }
   function checkedNiches(){return [...document.querySelectorAll('#cixModalRoot .cix-check input:checked')].map(x=>x.value);}
 
