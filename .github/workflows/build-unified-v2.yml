@@ -18,6 +18,7 @@ on:
       - 'scripts/apply_assets_patch.py'
       - 'scripts/enhance_testing_workspace.py'
       - 'scripts/build_unified_v2.py'
+      - 'scripts/fix_crud_modal_event.py'
       - 'scripts/smoke_intelligence.mjs'
       - '.github/workflows/build-unified-v2.yml'
 
@@ -31,6 +32,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: Apply CRUD modal source fix
+        run: python3 scripts/fix_crud_modal_event.py
       - name: Validate Intelligence JavaScript
         run: |
           node --check creativeos-intelligence-core-v2.js
@@ -69,6 +72,7 @@ jobs:
             'intelligence crud':'creativeos-intelligence-crud.js?v=2' in s,
             'intelligence crud styles':'creativeos-intelligence-crud.css?v=2' in s,
             'safe shell observer':"if(!document.getElementById('ciNavGroup')||!document.getElementById('ciHost'))ensureShell()" in core,
+            'crud modal backdrop owns no close action':'<div class="cix-backdrop" data-cix-close>' not in crud and '<div class="cix-backdrop">' in crud,
             'crud add controls':'data-cix-add' in crud,
             'crud edit controls':'data-cix-edit' in crud,
             'crud delete controls':'data-cix-delete' in crud,
@@ -89,10 +93,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html creativeos-intelligence-crud.js
           if git diff --cached --quiet; then
             echo "No production changes"
             exit 0
           fi
-          git commit -m "Build CreativeOS stable interactive intelligence"
+          git commit -m "Fix CreativeOS Intelligence modal actions"
           git push
