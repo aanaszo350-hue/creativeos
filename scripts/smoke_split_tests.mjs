@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { extname, join, normalize } from 'node:path';
 
-const ROOT=process.cwd(), PORT=5200, CDP_PORT=9224;
+const ROOT=process.cwd(), PORT=5199, CDP_PORT=9224;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};
 const server=http.createServer(async(req,res)=>{try{const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));const file=normalize(join(ROOT,rel));if(!file.startsWith(ROOT)){res.writeHead(403);return res.end('forbidden');}const st=await stat(file);if(!st.isFile())throw 0;const data=await readFile(file);res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch{res.writeHead(404);res.end('not found');}});
