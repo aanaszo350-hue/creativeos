@@ -11,7 +11,7 @@ runpy.run_path('scripts/apply_assets_patch.py', run_name='__main__')
 runpy.run_path('scripts/enhance_testing_workspace.py', run_name='__main__')
 
 s = index.read_text(encoding='utf-8')
-meta = '<meta name="creativeos-build" content="unified-v5-split-testing" />'
+meta = '<meta name="creativeos-build" content="unified-v6-winner-lab" />'
 s = s.replace('<meta name="creativeos-build" content="unified-v2" />', meta)
 if meta not in s:
     s = s.replace('<meta name="theme-color" content="#090b10" />', '<meta name="theme-color" content="#090b10" />\n  ' + meta)
@@ -22,12 +22,14 @@ css_links = [
     '<link rel="stylesheet" href="./creativeos-intelligence.css?v=2" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-v3.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-product-lens.css?v=1" />',
-    '<link rel="stylesheet" href="./creativeos-split-tests.css?v=1" />',
+    '<link rel="stylesheet" href="./creativeos-matrix-v2.css?v=1" />',
+    '<link rel="stylesheet" href="./creativeos-winner-splits.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-crud.css?v=2" />',
 ]
 head_scripts = [
     '<script src="./creativeos-product-set-migration.js?v=1"></script>',
     '<script src="./creativeos-cloud.js?v=2"></script>',
+    '<script src="./creativeos-media-upload.js?v=1"></script>',
 ]
 for link in (*css_links, *head_scripts):
     if link not in s:
@@ -39,8 +41,8 @@ js_links = [
     '<script src="./creativeos-ux-v4.js?v=1"></script>',
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
     '<script src="./creativeos-product-lens.js?v=1"></script>',
-    '<script src="./creativeos-split-tests.js?v=1"></script>',
-    '<script src="./creativeos-split-tests-continuation.js?v=1"></script>',
+    '<script src="./creativeos-winner-splits.js?v=2"></script>',
+    '<script src="./creativeos-matrix-v2.js?v=2"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
 if shell not in s:
@@ -58,14 +60,18 @@ checks = {
     'product migration': 'creativeos-product-set-migration.js?v=1' in s,
     'migration before cloud': s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
     'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
+    'media uploader': 'creativeos-media-upload.js?v=1' in s,
     'intelligence base styles': 'creativeos-intelligence.css?v=2' in s,
     'intelligence hierarchy styles': 'creativeos-intelligence-v3.css?v=1' in s,
     'product lens styles': 'creativeos-product-lens.css?v=1' in s,
-    'split test styles': 'creativeos-split-tests.css?v=1' in s,
+    'matrix v2 styles': 'creativeos-matrix-v2.css?v=1' in s,
+    'winner split styles': 'creativeos-winner-splits.css?v=1' in s,
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
     'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
-    'split test system': 'creativeos-split-tests.js?v=1' in s,
-    'split continuation': 'creativeos-split-tests-continuation.js?v=1' in s,
+    'winner split system': 'creativeos-winner-splits.js?v=2' in s,
+    'matrix v2 system': 'creativeos-matrix-v2.js?v=2' in s,
+    'old split system disabled': 'creativeos-split-tests.js?v=1' not in s,
+    'old split continuation disabled': 'creativeos-split-tests-continuation.js?v=1' not in s,
     'old v2 intelligence core disabled': 'creativeos-intelligence-core-v2.js?v=2' not in s,
     'old v1 intelligence disabled': 'creativeos-intelligence.js?v=1' not in s,
     'intelligence crud styles': 'creativeos-intelligence-crud.css?v=2' in s,
@@ -79,4 +85,4 @@ if failed:
     raise SystemExit('Refusing build: ' + ', '.join(failed))
 
 index.write_text(s, encoding='utf-8')
-print('CreativeOS unified-v5 split testing built successfully')
+print('CreativeOS unified-v6 winner lab built successfully')
