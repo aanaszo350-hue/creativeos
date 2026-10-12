@@ -1,0 +1,97 @@
+/* Product-centric Intelligence layer */
+#ciHost[data-ci-view="avatars"]{--ci-accent:#f59e0b;--ci-soft:rgba(245,158,11,.09)}
+.ci-nav-btn.route-matrix::before{background:#f59e0b!important}
+.cio-hero{position:relative;overflow:hidden}
+.cio-hero::after{content:"";position:absolute;right:-90px;top:-120px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--ci-accent) 16%,transparent),transparent 67%);pointer-events:none}
+.cio-context-note{margin:-4px 0 18px;padding:12px 14px;border-radius:12px;background:rgba(245,158,11,.055);border:1px solid rgba(245,158,11,.16);font-size:11px;color:#8f98a8;line-height:1.5}
+.cio-context-note b{color:#efc06b}
+
+.cio-product-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.cio-product-tabs button,.cio-mode-tabs button{appearance:none;border:1px solid rgba(255,255,255,.07);background:#0f141c;color:#8995a7;border-radius:11px;padding:9px 11px;cursor:pointer;transition:.15s ease;text-align:left}
+.cio-product-tabs button:hover,.cio-mode-tabs button:hover{border-color:color-mix(in srgb,var(--ci-accent) 35%,rgba(255,255,255,.08));color:#d8e2ee}
+.cio-product-tabs button.active,.cio-mode-tabs button.active{border-color:color-mix(in srgb,var(--ci-accent) 48%,rgba(255,255,255,.08));background:var(--ci-soft);color:#edf4fb}
+.cio-product-tabs button span{display:block;font-size:11px;font-weight:800}
+.cio-product-tabs button small{display:block;margin-top:3px;font-size:8px;color:#657287}
+.cio-mode-tabs{display:flex;gap:7px;margin:0 0 10px}
+.cio-mode-tabs button{font-size:10px;font-weight:800}
+
+.cio-lens-summary{display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);margin:0 0 14px}
+.cio-lens-summary span{font-size:9px;color:#657286;text-transform:uppercase;letter-spacing:.06em}
+.cio-lens-summary b{font-size:12px;color:#e2e9f2}
+.cio-lens-summary i{height:20px;width:1px;background:rgba(255,255,255,.08);margin:0 5px}
+
+.cio-matrix-stack{display:grid;gap:15px}
+.cio-matrix-product{border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#101620,#0b1017);border-radius:18px;padding:16px}
+.cio-matrix-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:14px}
+.cio-matrix-head span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#7b8798}
+.cio-matrix-head h3{margin:4px 0 3px;font-size:18px;color:#f2f6fb}
+.cio-matrix-head p{margin:0;font-size:10px;color:#667387}
+.cio-matrix-head button{appearance:none;border:1px solid rgba(245,158,11,.20);background:rgba(245,158,11,.07);color:#d7aa55;border-radius:9px;padding:8px 10px;font-size:9px;font-weight:800;cursor:pointer}
+.cio-matrix-head button:hover{background:rgba(245,158,11,.12);color:#efc26d}
+.cio-variable-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cio-variable{padding:11px;border-radius:11px;background:#0d1219;border:1px solid rgba(255,255,255,.055);min-width:0}
+.cio-variable.multi{border-color:rgba(52,211,153,.12)}
+.cio-variable.one{border-color:rgba(96,165,250,.11)}
+.cio-variable.empty{border-color:rgba(248,113,113,.09);opacity:.82}
+.cio-variable-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.cio-variable-top b{font-size:10px;color:#cbd6e3}
+.cio-variable-top span{font-size:8px;color:#667489;white-space:nowrap}
+.cio-variable p{margin:6px 0 9px;color:#657185;font-size:8px;line-height:1.4;min-height:23px}
+.cio-variable-examples{display:grid;gap:4px;margin-bottom:8px}
+.cio-variable-examples small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.025);color:#8d99a9;font-size:8px}
+.cio-variable-bar{height:3px;border-radius:99px;background:rgba(255,255,255,.045);overflow:hidden}
+.cio-variable-bar i{display:block;height:100%;background:#f59e0b;border-radius:99px}
+.cio-matrix-next{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.055);font-size:9px}
+.cio-matrix-next span{color:#657184;text-transform:uppercase;letter-spacing:.05em}
+.cio-matrix-next b{color:#efc06b}
+.cio-matrix-next small{color:#697487;margin-left:auto}
+
+.cio-angle-grid,.cio-concept-grid,.cio-learning-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cio-angle-card,.cio-concept-card,.cio-learning-card{position:relative;overflow:hidden;padding:15px;border-radius:15px;background:linear-gradient(180deg,#111720,#0d1219);border:1px solid rgba(255,255,255,.07)}
+.cio-card-accent{position:absolute;left:0;top:0;right:0;height:2px;background:var(--ci-accent)}
+.cio-concept-card.user-confirmed-test .cio-card-accent{background:#34d399}
+.cio-concept-card.saved-working-concept .cio-card-accent{background:#f59e0b}
+.cio-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.cio-card-kicker{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#667386;font-weight:800}
+.cio-card-top h3{margin:4px 0 0;font-size:13px;line-height:1.3;color:#e9eff7}
+.cio-angle-card>p,.cio-concept-card>p,.cio-learning-card>p{margin:10px 0 12px;color:#7d8a9b;font-size:10px;line-height:1.5}
+.cio-result-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:10px}
+.cio-result-row span{padding:7px;border-radius:8px;background:rgba(255,255,255,.025);font-size:8px;color:#677489}
+.cio-result-row b{display:block;color:#bdc9d7;font-size:11px;margin-bottom:2px}
+.cio-chip-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.cio-chip-row span{font-size:8px;padding:4px 6px;border-radius:999px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.05);color:#7f8b9c}
+.cio-card-sections{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)}
+.cio-card-sections>div>small{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#5f6c7f}
+.cio-inline-actions{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.055)}
+.cio-inline-actions button{appearance:none;border:1px solid rgba(255,255,255,.07);background:#111821;color:#7e8b9e;border-radius:7px;padding:5px 7px;font-size:8px;cursor:pointer}
+.cio-inline-actions button:hover{border-color:rgba(96,165,250,.28);color:#accbf0}
+.cio-inline-actions button.danger:hover{border-color:rgba(248,113,113,.25);color:#f3a6a6}
+
+.cio-learning-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:14px 0 10px}
+.cio-learning-head span{font-size:8px;color:#657185;text-transform:uppercase;letter-spacing:.07em}
+.cio-learning-head h2{margin:3px 0 0;font-size:18px;color:#eef4fb}
+.cio-learning-head>b{font-size:10px;color:#7d8a9d}
+.cio-learning-context{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)}
+.cio-learning-context span{font-size:8px;color:#667387}
+.cio-learning-context b{color:#9eabbc}
+.cio-empty-panel{grid-column:1/-1;min-height:150px;border:1px dashed rgba(255,255,255,.08);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;color:#657184;padding:20px}
+.cio-empty-panel b{color:#9dabbc;font-size:12px}
+.cio-empty-panel span{max-width:500px;font-size:9px;line-height:1.5}
+.cio-empty-panel button{margin-top:5px;border:1px solid rgba(52,211,153,.18);background:rgba(52,211,153,.07);color:#82c9ae;border-radius:8px;padding:7px 9px;font-size:9px;cursor:pointer}
+
+.cio-editable-niche-item{position:relative}
+.cio-editable-niche-item .cio-inline-actions{margin-top:8px}
+.cio-why{margin-top:9px;padding:8px 9px;border-radius:8px;background:rgba(96,165,250,.045);border:1px solid rgba(96,165,250,.08)}
+.cio-why span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:#6f89a7;font-weight:800}
+.cio-why p{margin:4px 0 0!important;color:#8191a5!important;font-size:9px!important;line-height:1.45}
+
+@media(max-width:1180px){
+  .cio-variable-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cio-angle-grid,.cio-concept-grid,.cio-learning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .cio-variable-grid,.cio-angle-grid,.cio-concept-grid,.cio-learning-grid,.cio-card-sections{grid-template-columns:1fr}
+  .cio-matrix-head,.cio-learning-head{flex-direction:column;align-items:flex-start}
+  .cio-matrix-next{align-items:flex-start;flex-wrap:wrap}
+  .cio-matrix-next small{margin-left:0;width:100%}
+}
