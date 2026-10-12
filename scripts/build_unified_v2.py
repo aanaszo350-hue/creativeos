@@ -15,7 +15,7 @@ runpy.run_path('scripts/enhance_testing_workspace.py', run_name='__main__')
 
 s = index.read_text(encoding='utf-8')
 
-meta = '<meta name="creativeos-build" content="unified-v3-workflow-intelligence" />'
+meta = '<meta name="creativeos-build" content="unified-v4-product-intelligence" />'
 s = s.replace('<meta name="creativeos-build" content="unified-v2" />', meta)
 if meta not in s:
     s = s.replace('<meta name="theme-color" content="#090b10" />', '<meta name="theme-color" content="#090b10" />\n  ' + meta)
@@ -25,6 +25,7 @@ css_links = [
     '<link rel="stylesheet" href="./creativeos-ux-v4.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-intelligence.css?v=2" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-v3.css?v=1" />',
+    '<link rel="stylesheet" href="./creativeos-product-lens.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-crud.css?v=2" />',
 ]
 cloud_js_link = '<script src="./creativeos-cloud.js?v=2"></script>'
@@ -37,6 +38,7 @@ js_links = [
     '<script src="./creativeos-enhancements.js?v=3"></script>',
     '<script src="./creativeos-ux-v4.js?v=1"></script>',
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
+    '<script src="./creativeos-product-lens.js?v=1"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
 if shell not in s:
@@ -46,7 +48,6 @@ else:
         if link not in s:
             s = s.replace('</body>', '  ' + link + '\n</body>')
 
-# Production uses exactly one Intelligence renderer: v3.
 checks = {
     'no iframe wrapper': 'id="appframe"' not in s,
     'assets workspace': 'function assetsPage()' in s,
@@ -55,7 +56,9 @@ checks = {
     'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
     'intelligence base styles': 'creativeos-intelligence.css?v=2' in s,
     'intelligence hierarchy styles': 'creativeos-intelligence-v3.css?v=1' in s,
+    'product lens styles': 'creativeos-product-lens.css?v=1' in s,
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
+    'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
     'old v2 intelligence core disabled': 'creativeos-intelligence-core-v2.js?v=2' not in s,
     'old v1 intelligence disabled': 'creativeos-intelligence.js?v=1' not in s,
     'intelligence crud styles': 'creativeos-intelligence-crud.css?v=2' in s,
@@ -69,4 +72,4 @@ if failed:
     raise SystemExit('Refusing build: ' + ', '.join(failed))
 
 index.write_text(s, encoding='utf-8')
-print('CreativeOS unified-v3 workflow intelligence built successfully')
+print('CreativeOS unified-v4 product-centric intelligence built successfully')
