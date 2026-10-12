@@ -22,9 +22,9 @@ for(const cmd of ['google-chrome','google-chrome-stable','chromium','chromium-br
   if(out.trim()){chrome=out.trim();break;}
 }
 if(!chrome){server.close();throw new Error('Chrome/Chromium not found');}
-const proc=spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',`--remote-debugging-port=${CDP_PORT}`,'--remote-allow-origins=*','--user-data-dir=/tmp/creativeos-v3b-smoke','about:blank'],{stdio:['ignore','ignore','pipe']});
+const proc=spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--remote-debugging-address=127.0.0.1',`--remote-debugging-port=${CDP_PORT}`,'--remote-allow-origins=*','--user-data-dir=/tmp/creativeos-v3b-smoke','about:blank'],{stdio:['ignore','ignore','pipe']});
 let chromeErr='';proc.stderr.on('data',d=>chromeErr+=d);
-async function waitJson(url,attempts=80){for(let i=0;i<attempts;i++){try{const r=await fetch(url);if(r.ok)return await r.json();}catch{}await sleep(250);}throw new Error(`Timed out ${url}\n${chromeErr.slice(-1200)}`);}
+async function waitJson(url,attempts=240){for(let i=0;i<attempts;i++){try{const r=await fetch(url);if(r.ok)return await r.json();}catch{}await sleep(250);}throw new Error(`Timed out ${url}\n${chromeErr.slice(-1200)}`);}
 const version=await waitJson(`http://127.0.0.1:${CDP_PORT}/json/version`);
 const tr=await fetch(`http://127.0.0.1:${CDP_PORT}/json/new?${encodeURIComponent(`http://localhost:${PORT}/`)}`,{method:'PUT'});if(!tr.ok)throw new Error('Could not create target');
 const target=await tr.json(),ws=new WebSocket(target.webSocketDebuggerUrl||version.webSocketDebuggerUrl);
