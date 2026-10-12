@@ -40,6 +40,7 @@ js_links = [
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
     '<script src="./creativeos-product-lens.js?v=1"></script>',
     '<script src="./creativeos-split-tests.js?v=1"></script>',
+    '<script src="./creativeos-split-tests-continuation.js?v=1"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
 if shell not in s:
@@ -64,6 +65,7 @@ checks = {
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
     'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
     'split test system': 'creativeos-split-tests.js?v=1' in s,
+    'split continuation': 'creativeos-split-tests-continuation.js?v=1' in s,
     'old v2 intelligence core disabled': 'creativeos-intelligence-core-v2.js?v=2' not in s,
     'old v1 intelligence disabled': 'creativeos-intelligence.js?v=1' not in s,
     'intelligence crud styles': 'creativeos-intelligence-crud.css?v=2' in s,
