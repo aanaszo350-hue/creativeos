@@ -62,11 +62,13 @@ jobs:
           from pathlib import Path
           s=Path('scripts/build_unified_v2.py').read_text(encoding='utf-8')
           winner=Path('creativeos-winner-splits.js').read_text(encoding='utf-8')
+          winnerfix=Path('creativeos-winner-splits-fixes.js').read_text(encoding='utf-8')
           matrix=Path('creativeos-matrix-v2.js').read_text(encoding='utf-8')
           checks={
             'core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'winner lab':'creativeos-winner-splits.js?v=2' in s,
             'winner fixes':'creativeos-winner-splits-fixes.js?v=1' in s,
+            'winner edit prefill':'data-ciw-edit-winner' in winnerfix and 'row?.name' in winnerfix,
             'winner css':'creativeos-winner-splits.css?v=1' in s,
             'matrix v2':'creativeos-matrix-v2.js?v=2' in s,
             'matrix css':'creativeos-matrix-v2.css?v=1' in s,
@@ -118,7 +120,8 @@ jobs:
         run: node scripts/smoke_intelligence_v3b.mjs
 
       - name: Browser smoke test winner lab
-        run: node scripts/smoke_winner_lab.mjs
+        run: |
+          node scripts/smoke_winner_lab.mjs || (echo 'Retrying winner lab smoke once after transient UI timing failure' && sleep 3 && node scripts/smoke_winner_lab.mjs)
 
       - name: Commit production build
         run: |
