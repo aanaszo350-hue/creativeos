@@ -19,7 +19,7 @@ on:
       - 'scripts/apply_assets_patch.py'
       - 'scripts/enhance_testing_workspace.py'
       - 'scripts/build_unified_v2.py'
-      - 'scripts/smoke_intelligence_v3.mjs'
+      - 'scripts/smoke_intelligence_v3b.mjs'
       - '.github/workflows/build-unified-v2.yml'
 
 permissions:
@@ -37,7 +37,7 @@ jobs:
         run: |
           node --check creativeos-intelligence-core-v3.js
           node --check creativeos-intelligence-crud.js
-          node --check scripts/smoke_intelligence_v3.mjs
+          node --check scripts/smoke_intelligence_v3b.mjs
 
       - name: Confirm workflow Intelligence renderer
         run: |
@@ -91,7 +91,7 @@ jobs:
           PY
 
       - name: Browser smoke test workflow intelligence
-        run: node scripts/smoke_intelligence_v3.mjs
+        run: node scripts/smoke_intelligence_v3b.mjs
 
       - name: Commit production build
         run: |
