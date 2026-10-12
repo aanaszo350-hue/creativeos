@@ -18,6 +18,7 @@ on:
       - 'creativeos-intelligence-core-v3.js'
       - 'creativeos-product-lens.js'
       - 'creativeos-split-tests.js'
+      - 'creativeos-split-tests-continuation.js'
       - 'creativeos-intelligence-crud.css'
       - 'creativeos-intelligence-crud.js'
       - 'creativeos-bridge-schema.json'
@@ -45,6 +46,7 @@ jobs:
           node --check creativeos-intelligence-core-v3.js
           node --check creativeos-product-lens.js
           node --check creativeos-split-tests.js
+          node --check creativeos-split-tests-continuation.js
           node --check creativeos-intelligence-crud.js
           node --check scripts/smoke_intelligence_v3b.mjs
           node --check scripts/smoke_split_tests.mjs
@@ -55,11 +57,13 @@ jobs:
           from pathlib import Path
           s=Path('scripts/build_unified_v2.py').read_text(encoding='utf-8')
           split=Path('creativeos-split-tests.js').read_text(encoding='utf-8')
+          cont=Path('creativeos-split-tests-continuation.js').read_text(encoding='utf-8')
           migration=Path('creativeos-product-set-migration.js').read_text(encoding='utf-8')
           checks={
             'core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'product lens':'creativeos-product-lens.js?v=1' in s,
             'split system':'creativeos-split-tests.js?v=1' in s,
+            'split continuation':'creativeos-split-tests-continuation.js?v=1' in s,
             'split css':'creativeos-split-tests.css?v=1' in s,
             'product migration':'creativeos-product-set-migration.js?v=1' in s,
             'migration first':s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
@@ -67,6 +71,7 @@ jobs:
             'primary variable model':'primary_variable' in split,
             'derived changes':'derived_changes' in split,
             'winner lineage':'parent_variant_id' in split and 'data-cis-child-test' in split,
+            'closed winner continuation':'Winner listo para iterar' in cont and 'data-cis-child-test' in cont,
             'production checklist':'waiting_record' in split and 'recorded' in split and 'published' in split and 'waiting_data' in split and 'data_ready' in split,
             'tree and chronology':'Árbol de winners' in split and 'Cronología' in split,
             'no camera split variable':"['format','Formato / cámara']" not in split,
@@ -96,6 +101,7 @@ jobs:
             'workflow intelligence core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'product intelligence lens':'creativeos-product-lens.js?v=1' in s,
             'split test system':'creativeos-split-tests.js?v=1' in s,
+            'split continuation':'creativeos-split-tests-continuation.js?v=1' in s,
             'split test styles':'creativeos-split-tests.css?v=1' in s,
             'old v2 disabled':'creativeos-intelligence-core-v2.js?v=2' not in s,
             'old v1 disabled':'<script src="./creativeos-intelligence.js?v=1"></script>' not in s,
