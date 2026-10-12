@@ -6,16 +6,12 @@ index = Path('index.html')
 if not base.exists():
     raise SystemExit('base.html not found')
 
-# Start every production build from the known-good application source.
 index.write_text(base.read_text(encoding='utf-8'), encoding='utf-8')
-
-# Keep the strong existing product workspace and editable product knowledge.
 runpy.run_path('scripts/apply_assets_patch.py', run_name='__main__')
 runpy.run_path('scripts/enhance_testing_workspace.py', run_name='__main__')
 
 s = index.read_text(encoding='utf-8')
-
-meta = '<meta name="creativeos-build" content="unified-v4-product-intelligence" />'
+meta = '<meta name="creativeos-build" content="unified-v5-split-testing" />'
 s = s.replace('<meta name="creativeos-build" content="unified-v2" />', meta)
 if meta not in s:
     s = s.replace('<meta name="theme-color" content="#090b10" />', '<meta name="theme-color" content="#090b10" />\n  ' + meta)
@@ -26,6 +22,7 @@ css_links = [
     '<link rel="stylesheet" href="./creativeos-intelligence.css?v=2" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-v3.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-product-lens.css?v=1" />',
+    '<link rel="stylesheet" href="./creativeos-split-tests.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-crud.css?v=2" />',
 ]
 head_scripts = [
@@ -42,6 +39,7 @@ js_links = [
     '<script src="./creativeos-ux-v4.js?v=1"></script>',
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
     '<script src="./creativeos-product-lens.js?v=1"></script>',
+    '<script src="./creativeos-split-tests.js?v=1"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
 if shell not in s:
@@ -56,14 +54,16 @@ checks = {
     'assets workspace': 'function assetsPage()' in s,
     'enhancement script': 'creativeos-enhancements.js?v=3' in s,
     'workflow center': 'creativeos-ux-v4.js?v=1' in s,
-    'product set migration': 'creativeos-product-set-migration.js?v=1' in s,
-    'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
+    'product migration': 'creativeos-product-set-migration.js?v=1' in s,
     'migration before cloud': s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
+    'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
     'intelligence base styles': 'creativeos-intelligence.css?v=2' in s,
     'intelligence hierarchy styles': 'creativeos-intelligence-v3.css?v=1' in s,
     'product lens styles': 'creativeos-product-lens.css?v=1' in s,
+    'split test styles': 'creativeos-split-tests.css?v=1' in s,
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
     'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
+    'split test system': 'creativeos-split-tests.js?v=1' in s,
     'old v2 intelligence core disabled': 'creativeos-intelligence-core-v2.js?v=2' not in s,
     'old v1 intelligence disabled': 'creativeos-intelligence.js?v=1' not in s,
     'intelligence crud styles': 'creativeos-intelligence-crud.css?v=2' in s,
@@ -77,4 +77,4 @@ if failed:
     raise SystemExit('Refusing build: ' + ', '.join(failed))
 
 index.write_text(s, encoding='utf-8')
-print('CreativeOS unified-v4 product-centric intelligence built successfully')
+print('CreativeOS unified-v5 split testing built successfully')
