@@ -1,4 +1,4 @@
-name: Build unified CreativeOS v3
+name: Build unified CreativeOS v4
 
 on:
   push:
@@ -12,7 +12,9 @@ on:
       - 'creativeos-ux-v4.js'
       - 'creativeos-intelligence.css'
       - 'creativeos-intelligence-v3.css'
+      - 'creativeos-product-lens.css'
       - 'creativeos-intelligence-core-v3.js'
+      - 'creativeos-product-lens.js'
       - 'creativeos-intelligence-crud.css'
       - 'creativeos-intelligence-crud.js'
       - 'creativeos-bridge-schema.json'
@@ -36,16 +38,28 @@ jobs:
       - name: Validate Intelligence JavaScript
         run: |
           node --check creativeos-intelligence-core-v3.js
+          node --check creativeos-product-lens.js
           node --check creativeos-intelligence-crud.js
           node --check scripts/smoke_intelligence_v3b.mjs
 
-      - name: Confirm workflow Intelligence renderer
+      - name: Confirm product-centric Intelligence layer
         run: |
           python3 - <<'PY'
           from pathlib import Path
           s=Path('scripts/build_unified_v2.py').read_text(encoding='utf-8')
-          if 'creativeos-intelligence-core-v3.js?v=1' not in s:
-              raise SystemExit('Workflow Intelligence v3 core missing')
+          lens=Path('creativeos-product-lens.js').read_text(encoding='utf-8')
+          checks={
+            'v3 core':'creativeos-intelligence-core-v3.js?v=1' in s,
+            'product lens':'creativeos-product-lens.js?v=1' in s,
+            'product lens css':'creativeos-product-lens.css?v=1' in s,
+            'matrix replacement':'Matriz de Tests' in lens,
+            'product angles':'data-cio-angle-product' in lens,
+            'grouped learnings':'data-cio-learning-mode' in lens,
+            'niche concept editing':"editActions('concept'" in lens,
+            'niche angle editing':"editActions('angle'" in lens,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed: raise SystemExit('Product lens validation failed: '+', '.join(failed))
           PY
 
       - name: Build production index
@@ -65,6 +79,8 @@ jobs:
             'workflow center':'creativeos-ux-v4.js?v=1' in s,
             'cloud media bridge':'creativeos-cloud.js?v=2' in s,
             'workflow intelligence core':'creativeos-intelligence-core-v3.js?v=1' in s,
+            'product intelligence lens':'creativeos-product-lens.js?v=1' in s,
+            'product lens styles':'creativeos-product-lens.css?v=1' in s,
             'old v2 disabled':'creativeos-intelligence-core-v2.js?v=2' not in s,
             'old v1 disabled':'<script src="./creativeos-intelligence.js?v=1"></script>' not in s,
             'visual hierarchy styles':'creativeos-intelligence-v3.css?v=1' in s,
@@ -73,7 +89,6 @@ jobs:
             'safe shell observer':"if(!document.getElementById('ciNavGroup')||!document.getElementById('ciHost'))ensureShell()" in core,
             'workflow builder':'data-ci-add-node' in core and 'data-ci-save-workflow' in core,
             'daily batch logger':'data-ci-save-log' in core,
-            'three-level source labels':'Testeado por ti' in core and 'Guardado / en test' in core and 'Hipótesis IA' in core,
             'crud modal backdrop safe':'<div class="cix-backdrop" data-cix-close>' not in crud and '<div class="cix-backdrop">' in crud,
             'crud add controls':'data-cix-add' in crud,
             'crud edit controls':'data-cix-edit' in crud,
@@ -102,5 +117,5 @@ jobs:
             echo "No production changes"
             exit 0
           fi
-          git commit -m "Build CreativeOS workflow intelligence"
+          git commit -m "Build CreativeOS product-centric intelligence"
           git push
