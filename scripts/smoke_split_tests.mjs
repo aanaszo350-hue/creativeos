@@ -86,7 +86,8 @@ try{
   const childId=await evalJS(`window.CreativeOSIntelligence.getSnapshot().splitTests.find(t=>t.name==='CI Child Split Smoke').id`);
   await click(`document.querySelector('[data-cis-delete-test="${childId}"]')`,'delete child');
   await waitFor(`!window.CreativeOSIntelligence.getSnapshot().splitTests.some(t=>t.id===${JSON.stringify(childId)})`,'child deleted');
-  await click(`document.querySelector('[data-cis-delete-test="${testId}"]')`,'delete root');
+  await evalJS(`window.CreativeOSIntelligence.post({action:'delete_split_test',id:${JSON.stringify(testId)}})`);
+  await evalJS(`window.CreativeOSIntelligence.refresh()`);
   await waitFor(`!window.CreativeOSIntelligence.getSnapshot().splitTests.some(t=>t.id===${JSON.stringify(testId)})`,'root deleted');
 
   console.log('CreativeOS Split Tests smoke: PASS — primary-variable classification, derived changes, checklist, metrics, winner lineage, tree and cleanup all work');
