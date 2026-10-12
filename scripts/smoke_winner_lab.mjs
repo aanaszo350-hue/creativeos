@@ -58,7 +58,9 @@ try{
 
   await click(`document.querySelector('#ciwSplitNav')`,'winner split nav');
   await waitFor(`document.querySelector('#ciHost')?.dataset?.ciView==='winner-splits'`,'winner split view');
+  await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
   await click(`document.querySelector('[data-ciw-product="strideshield"]')`,'Stride winner product');
+  await waitFor(`!!document.querySelector('[data-ciw-new-winner]')`,'winner lab ready');
   await click(`document.querySelector('[data-ciw-new-winner]')`,'new winner');
   await waitFor(`!!document.querySelector('#ciwWinnerName')`,'winner modal');
   await setValue('#ciwWinnerName','CI Winner Smoke');await setValue('#ciwWinnerViews','500000');await setValue('#ciwWinnerSales','5');
