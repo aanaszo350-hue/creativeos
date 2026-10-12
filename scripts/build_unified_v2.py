@@ -42,6 +42,7 @@ js_links = [
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
     '<script src="./creativeos-product-lens.js?v=1"></script>',
     '<script src="./creativeos-winner-splits.js?v=2"></script>',
+    '<script src="./creativeos-winner-splits-fixes.js?v=1"></script>',
     '<script src="./creativeos-matrix-v2.js?v=2"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
@@ -69,6 +70,7 @@ checks = {
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
     'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
     'winner split system': 'creativeos-winner-splits.js?v=2' in s,
+    'winner split fixes': 'creativeos-winner-splits-fixes.js?v=1' in s,
     'matrix v2 system': 'creativeos-matrix-v2.js?v=2' in s,
     'old split system disabled': 'creativeos-split-tests.js?v=1' not in s,
     'old split continuation disabled': 'creativeos-split-tests-continuation.js?v=1' not in s,
