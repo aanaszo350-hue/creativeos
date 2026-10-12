@@ -21,6 +21,7 @@ on:
       - 'creativeos-product-lens.js'
       - 'creativeos-matrix-v2.js'
       - 'creativeos-winner-splits.js'
+      - 'creativeos-winner-splits-fixes.js'
       - 'creativeos-intelligence-crud.css'
       - 'creativeos-intelligence-crud.js'
       - 'creativeos-bridge-schema.json'
@@ -49,6 +50,7 @@ jobs:
           node --check creativeos-product-lens.js
           node --check creativeos-media-upload.js
           node --check creativeos-winner-splits.js
+          node --check creativeos-winner-splits-fixes.js
           node --check creativeos-matrix-v2.js
           node --check creativeos-intelligence-crud.js
           node --check scripts/smoke_intelligence_v3b.mjs
@@ -64,6 +66,7 @@ jobs:
           checks={
             'core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'winner lab':'creativeos-winner-splits.js?v=2' in s,
+            'winner fixes':'creativeos-winner-splits-fixes.js?v=1' in s,
             'winner css':'creativeos-winner-splits.css?v=1' in s,
             'matrix v2':'creativeos-matrix-v2.js?v=2' in s,
             'matrix css':'creativeos-matrix-v2.css?v=1' in s,
@@ -99,6 +102,7 @@ jobs:
             'product lens':'creativeos-product-lens.js?v=1' in s,
             'interactive matrix':'creativeos-matrix-v2.js?v=2' in s,
             'winner split lab':'creativeos-winner-splits.js?v=2' in s,
+            'winner edit fix':'creativeos-winner-splits-fixes.js?v=1' in s,
             'old split removed':'<script src="./creativeos-split-tests.js?v=1"></script>' not in s,
             'old continuation removed':'<script src="./creativeos-split-tests-continuation.js?v=1"></script>' not in s,
             'safe shell observer':"if(!document.getElementById('ciNavGroup')||!document.getElementById('ciHost'))ensureShell()" in core,
