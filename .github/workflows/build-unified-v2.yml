@@ -1,4 +1,4 @@
-name: Build unified CreativeOS v4
+name: Build unified CreativeOS v5
 
 on:
   push:
@@ -14,8 +14,10 @@ on:
       - 'creativeos-intelligence.css'
       - 'creativeos-intelligence-v3.css'
       - 'creativeos-product-lens.css'
+      - 'creativeos-split-tests.css'
       - 'creativeos-intelligence-core-v3.js'
       - 'creativeos-product-lens.js'
+      - 'creativeos-split-tests.js'
       - 'creativeos-intelligence-crud.css'
       - 'creativeos-intelligence-crud.js'
       - 'creativeos-bridge-schema.json'
@@ -23,6 +25,7 @@ on:
       - 'scripts/enhance_testing_workspace.py'
       - 'scripts/build_unified_v2.py'
       - 'scripts/smoke_intelligence_v3b.mjs'
+      - 'scripts/smoke_split_tests.mjs'
       - '.github/workflows/build-unified-v2.yml'
 
 permissions:
@@ -41,31 +44,35 @@ jobs:
           node --check creativeos-product-set-migration.js
           node --check creativeos-intelligence-core-v3.js
           node --check creativeos-product-lens.js
+          node --check creativeos-split-tests.js
           node --check creativeos-intelligence-crud.js
           node --check scripts/smoke_intelligence_v3b.mjs
+          node --check scripts/smoke_split_tests.mjs
 
-      - name: Confirm product-centric Intelligence layer
+      - name: Confirm split-testing Intelligence layer
         run: |
           python3 - <<'PY'
           from pathlib import Path
           s=Path('scripts/build_unified_v2.py').read_text(encoding='utf-8')
-          lens=Path('creativeos-product-lens.js').read_text(encoding='utf-8')
+          split=Path('creativeos-split-tests.js').read_text(encoding='utf-8')
           migration=Path('creativeos-product-set-migration.js').read_text(encoding='utf-8')
           checks={
-            'v3 core':'creativeos-intelligence-core-v3.js?v=1' in s,
+            'core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'product lens':'creativeos-product-lens.js?v=1' in s,
-            'product lens css':'creativeos-product-lens.css?v=1' in s,
+            'split system':'creativeos-split-tests.js?v=1' in s,
+            'split css':'creativeos-split-tests.css?v=1' in s,
             'product migration':'creativeos-product-set-migration.js?v=1' in s,
             'migration first':s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
             'canonical active ids':all(x in migration for x in ['strideshield','plnwzcp','flowerpress']),
-            'matrix replacement':'Matriz de Tests' in lens,
-            'product angles':'data-cio-angle-product' in lens,
-            'grouped learnings':'data-cio-learning-mode' in lens,
-            'niche concept editing':"editActions('concept'" in lens,
-            'niche angle editing':"editActions('angle'" in lens,
+            'primary variable model':'primary_variable' in split,
+            'derived changes':'derived_changes' in split,
+            'winner lineage':'parent_variant_id' in split and 'data-cis-child-test' in split,
+            'production checklist':'waiting_record' in split and 'recorded' in split and 'published' in split and 'waiting_data' in split and 'data_ready' in split,
+            'tree and chronology':'Árbol de winners' in split and 'Cronología' in split,
+            'no camera split variable':"['format','Formato / cámara']" not in split,
           }
           failed=[k for k,v in checks.items() if not v]
-          if failed: raise SystemExit('Product lens validation failed: '+', '.join(failed))
+          if failed: raise SystemExit('Split layer validation failed: '+', '.join(failed))
           PY
 
       - name: Build production index
@@ -88,7 +95,8 @@ jobs:
             'migration before cloud':s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
             'workflow intelligence core':'creativeos-intelligence-core-v3.js?v=1' in s,
             'product intelligence lens':'creativeos-product-lens.js?v=1' in s,
-            'product lens styles':'creativeos-product-lens.css?v=1' in s,
+            'split test system':'creativeos-split-tests.js?v=1' in s,
+            'split test styles':'creativeos-split-tests.css?v=1' in s,
             'old v2 disabled':'creativeos-intelligence-core-v2.js?v=2' not in s,
             'old v1 disabled':'<script src="./creativeos-intelligence.js?v=1"></script>' not in s,
             'visual hierarchy styles':'creativeos-intelligence-v3.css?v=1' in s,
@@ -116,6 +124,9 @@ jobs:
       - name: Browser smoke test workflow intelligence
         run: node scripts/smoke_intelligence_v3b.mjs
 
+      - name: Browser smoke test split experiments
+        run: node scripts/smoke_split_tests.mjs
+
       - name: Commit production build
         run: |
           git config user.name "github-actions[bot]"
@@ -125,5 +136,5 @@ jobs:
             echo "No production changes"
             exit 0
           fi
-          git commit -m "Build CreativeOS product-centric intelligence"
+          git commit -m "Build CreativeOS split testing"
           git push
