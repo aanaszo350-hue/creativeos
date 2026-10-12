@@ -28,8 +28,11 @@ css_links = [
     '<link rel="stylesheet" href="./creativeos-product-lens.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-crud.css?v=2" />',
 ]
-cloud_js_link = '<script src="./creativeos-cloud.js?v=2"></script>'
-for link in (*css_links, cloud_js_link):
+head_scripts = [
+    '<script src="./creativeos-product-set-migration.js?v=1"></script>',
+    '<script src="./creativeos-cloud.js?v=2"></script>',
+]
+for link in (*css_links, *head_scripts):
     if link not in s:
         s = s.replace('</head>', '  ' + link + '\n</head>')
 
@@ -53,7 +56,9 @@ checks = {
     'assets workspace': 'function assetsPage()' in s,
     'enhancement script': 'creativeos-enhancements.js?v=3' in s,
     'workflow center': 'creativeos-ux-v4.js?v=1' in s,
+    'product set migration': 'creativeos-product-set-migration.js?v=1' in s,
     'cloud media bridge': 'creativeos-cloud.js?v=2' in s,
+    'migration before cloud': s.find('creativeos-product-set-migration.js?v=1') < s.find('creativeos-cloud.js?v=2'),
     'intelligence base styles': 'creativeos-intelligence.css?v=2' in s,
     'intelligence hierarchy styles': 'creativeos-intelligence-v3.css?v=1' in s,
     'product lens styles': 'creativeos-product-lens.css?v=1' in s,
