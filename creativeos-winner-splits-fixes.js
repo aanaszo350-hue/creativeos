@@ -104,5 +104,18 @@
   });
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
-  window.CreativeOSWinnerLabFixes={version:'1.2',repairSelection,burstRepair};
+  function loadSplitBoardV3(){
+    if(window.CreativeOSSplitBoard?.version==='3.0')return;
+    if(document.querySelector('script[data-cos-split-board-v3]'))return;
+    const script=document.createElement('script');
+    script.src='./creativeos-split-board-v3.js?v=1';
+    script.dataset.cosSplitBoardV3='1';
+    script.defer=true;
+    document.head.appendChild(script);
+  }
+
+  loadSplitBoardV3();
+  document.addEventListener('DOMContentLoaded',loadSplitBoardV3,{once:true});
+
+  window.CreativeOSWinnerLabFixes={version:'1.3',repairSelection,burstRepair,loadSplitBoardV3};
 })();
