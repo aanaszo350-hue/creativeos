@@ -23,7 +23,7 @@
   function repairSelection(){
     const host=document.getElementById('ciHost');
     if(host?.dataset?.ciView!=='winner-splits')return;
-    if(document.getElementById('ciwModalRoot'))return;
+    if(document.getElementById('ciwModalRoot')||document.getElementById('cos4Root'))return;
 
     const stored=wantedTrack();
     if(stored)desiredTrackId=stored;
@@ -68,7 +68,7 @@
     if(track){
       desiredTrackId=track.dataset.ciwTrack||'';
       if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);
-      burstRepair();
+      if(window.CreativeOSSplitBoard?.version!=='4.0')burstRepair();
     }
 
     const newAttempt=e.target.closest?.('[data-ciw-new-attempt]');
@@ -94,28 +94,32 @@
 
   window.addEventListener('creativeos:winner-lab-updated',()=>{
     desiredTrackId=wantedTrack();
-    repairSelection();
-    burstRepair();
+    if(window.CreativeOSSplitBoard?.version!=='4.0'){
+      repairSelection();
+      burstRepair();
+    }
   });
 
   const observer=new MutationObserver(()=>{
     const host=document.getElementById('ciHost');
-    if(host?.dataset?.ciView==='winner-splits')scheduleRepair(0);
+    if(host?.dataset?.ciView==='winner-splits'&&window.CreativeOSSplitBoard?.version!=='4.0')scheduleRepair(0);
   });
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
-  function loadSplitBoardV3(){
-    if(window.CreativeOSSplitBoard?.version==='3.0')return;
-    if(document.querySelector('script[data-cos-split-board-v3]'))return;
+  function loadSplitBoard(){
+    if(window.CreativeOSSplitBoard?.version==='4.0')return;
+    if(document.querySelector('script[data-cos-split-board-v4]'))return;
+    const old=document.querySelector('script[data-cos-split-board-v3]');
+    old?.remove();
     const script=document.createElement('script');
-    script.src='./creativeos-split-board-v3.js?v=1';
-    script.dataset.cosSplitBoardV3='1';
+    script.src='./creativeos-split-board-v3.js?v=2';
+    script.dataset.cosSplitBoardV4='1';
     script.defer=true;
     document.head.appendChild(script);
   }
 
-  loadSplitBoardV3();
-  document.addEventListener('DOMContentLoaded',loadSplitBoardV3,{once:true});
+  loadSplitBoard();
+  document.addEventListener('DOMContentLoaded',loadSplitBoard,{once:true});
 
-  window.CreativeOSWinnerLabFixes={version:'1.3',repairSelection,burstRepair,loadSplitBoardV3};
+  window.CreativeOSWinnerLabFixes={version:'1.4',repairSelection,burstRepair,loadSplitBoard};
 })();
