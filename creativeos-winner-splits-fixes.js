@@ -106,20 +106,38 @@
   });
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
+  function loadSplitGroups(){
+    if(window.CreativeOSSplitSheetGroups?.version==='1.0')return;
+    if(document.querySelector('script[data-cos-split-groups]'))return;
+    const script=document.createElement('script');
+    script.src='./creativeos-split-sheet-groups.js?v=1';
+    script.dataset.cosSplitGroups='1';
+    script.defer=true;
+    document.head.appendChild(script);
+  }
+
   function loadSplitBoard(){
-    if(window.CreativeOSSplitBoard?.version==='4.0')return;
-    if(document.querySelector('script[data-cos-split-board-v4]'))return;
+    if(window.CreativeOSSplitBoard?.version==='4.0'){
+      loadSplitGroups();
+      return;
+    }
+    if(document.querySelector('script[data-cos-split-board-v4]')){
+      loadSplitGroups();
+      return;
+    }
     const old=document.querySelector('script[data-cos-split-board-v3]');
     old?.remove();
     const script=document.createElement('script');
     script.src='./creativeos-split-board-v3.js?v=2';
     script.dataset.cosSplitBoardV4='1';
     script.defer=true;
+    script.addEventListener('load',loadSplitGroups,{once:true});
     document.head.appendChild(script);
   }
 
   loadSplitBoard();
-  document.addEventListener('DOMContentLoaded',loadSplitBoard,{once:true});
+  loadSplitGroups();
+  document.addEventListener('DOMContentLoaded',()=>{loadSplitBoard();loadSplitGroups();},{once:true});
 
-  window.CreativeOSWinnerLabFixes={version:'1.4',repairSelection,burstRepair,loadSplitBoard};
+  window.CreativeOSWinnerLabFixes={version:'1.5',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups};
 })();
