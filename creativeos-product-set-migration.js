@@ -1,8 +1,8 @@
 (() => {
   'use strict';
   const STORAGE_KEY='creativeos_local_v3';
-  const VERSION='2026-10-12-active-3';
-  const allowed=new Set(['strideshield','plnwzcp','flowerpress']);
+  const VERSION='2026-10-19-active-4';
+  const allowed=new Set(['strideshield','plnwzcp','flowerpress','coloringrobe']);
 
   function existing(map,id){return map.get(id)||{};}
   function cleanMetrics(p){return {...p,published:null,views:null,bestViews:null,sales:null,comments:null,metricsStatus:'needs-data'};}
@@ -30,8 +30,14 @@
         assets:Array.isArray(oldFlower.assets)?oldFlower.assets:[],avatars:Array.isArray(oldFlower.avatars)?oldFlower.avatars:[],
         brief:'Mini prensa de flores silvestres para senderismo y amantes de las flores. Día 2 de test. Variantes trabajadas: grupo de amigas hikers, flower lover y regalo. No se atribuye rendimiento hasta registrar data real.'
       });
+      const oldRobe=existing(map,'coloringrobe');
+      const robe=cleanMetrics({
+        ...oldRobe,id:'coloringrobe',name:'Coloring Robe',label:'Bata para colorear',status:'Testing',day:Number(oldRobe.day||1),testMax:Number(oldRobe.testMax||7),testStart:oldRobe.testStart||'2026-10-19',nicheSlugs:Array.isArray(oldRobe.nicheSlugs)&&oldRobe.nicheSlugs.length?oldRobe.nicheSlugs:['general'],conceptsTested:Number(oldRobe.conceptsTested||0),anglesTested:Number(oldRobe.anglesTested||0),
+        assets:Array.isArray(oldRobe.assets)?oldRobe.assets:[],avatars:Array.isArray(oldRobe.avatars)?oldRobe.avatars:[],
+        brief:oldRobe.brief||'Bata para colorear. Test activo de conceptos de regalo y coloring. Control actual: padre regalando la bata a su hija; nuevos splits de texto y avatar abuela → nieta.'
+      });
 
-      state.products=[stride,camera,flower];
+      state.products=[stride,camera,flower,robe];
       if(Array.isArray(state.videos))state.videos=state.videos.filter(v=>!v?.productId||allowed.has(v.productId));
       if(state.context&&!allowed.has(state.context.productId))state.context={...state.context,productId:null,avatarId:null,assetIds:[],videoId:null};
       state.meta.activeProductSetVersion=VERSION;
