@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitSheetGroups?.version === '1.1') return;
+  if (window.CreativeOSSplitSheetGroups?.version === '1.2') return;
 
   const GROUPS = {
     summary: { label: 'Resumen del test', icon: '◇', color: '#94a3b8', soft: 'rgba(148,163,184,.07)' },
@@ -76,7 +76,8 @@
 
   function addNumberedCopy(grid){
     const {c}=current(); if(!c)return;
-    const values=[['Texto 1',c.text_1||''],['Texto 2',c.text_2||''],['Texto 3',c.text_3||''],['Texto 4',c.text_4||''],['CTA',c.cta||'']].filter(([,v])=>String(v).trim());
+    const firstText=c.text_1||c.hook_text||'';
+    const values=[['Texto 1',firstText],['Texto 2',c.text_2||''],['Texto 3',c.text_3||''],['Texto 4',c.text_4||''],['CTA',c.cta||'']].filter(([,v])=>String(v).trim());
     if(!values.length)return;
     [...grid.children].forEach(el=>{const l=txt(el);if(['hook variante','secuencia completa','hook de texto','texto 1','texto 2','texto 3','texto 4','cta'].includes(l))el.remove()});
     values.forEach(([l,v],i)=>grid.appendChild(card(l,v,i===0?'wide accent':'wide')));
@@ -110,5 +111,5 @@
   }
   function scan(){injectCss();decorateBoard();const root=document.getElementById('cos4Root');if(root)groupSheet(root)}
   const observer=new MutationObserver(scan);if(document.body)observer.observe(document.body,{childList:true,subtree:true});scan();
-  window.CreativeOSSplitSheetGroups={version:'1.1',scan};
+  window.CreativeOSSplitSheetGroups={version:'1.2',scan};
 })();
