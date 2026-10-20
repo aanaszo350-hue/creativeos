@@ -91,8 +91,14 @@
     document.querySelector('script[data-cos-split-board-v3]')?.remove();
     const script=document.createElement('script');script.src='./creativeos-split-board-v3.js?v=2';script.dataset.cosSplitBoardV4='1';script.defer=true;script.addEventListener('load',loadSplitGroups,{once:true});document.head.appendChild(script);
   }
+  function loadProductRadar(){
+    if(window.CreativeOSProductRadar?.version==='1.0')return;
+    if(document.querySelector('script[data-cos-product-radar]'))return;
+    const script=document.createElement('script');script.src='./creativeos-product-radar.js?v=1';script.dataset.cosProductRadar='1';script.defer=true;document.head.appendChild(script);
+  }
 
   patchIntelligenceProducts();
-  loadSplitBoard();loadSplitGroups();document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.7',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,patchIntelligenceProducts};
+  loadSplitBoard();loadSplitGroups();loadProductRadar();
+  document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();},{once:true});
+  window.CreativeOSWinnerLabFixes={version:'1.8',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,patchIntelligenceProducts};
 })();
