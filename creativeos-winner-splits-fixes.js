@@ -81,9 +81,9 @@
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
   function loadSplitGroups(){
-    if(window.CreativeOSSplitSheetGroups?.version==='1.1')return;
+    if(window.CreativeOSSplitSheetGroups?.version==='1.2')return;
     const old=document.querySelector('script[data-cos-split-groups]');old?.remove();
-    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=2';script.dataset.cosSplitGroups='1';script.defer=true;document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=3';script.dataset.cosSplitGroups='1';script.defer=true;document.head.appendChild(script);
   }
   function loadSplitBoard(){
     if(window.CreativeOSSplitBoard?.version==='4.0'){loadSplitGroups();return;}
@@ -100,5 +100,5 @@
   patchIntelligenceProducts();
   loadSplitBoard();loadSplitGroups();loadProductRadar();
   document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.8',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,patchIntelligenceProducts};
+  window.CreativeOSWinnerLabFixes={version:'1.9',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,patchIntelligenceProducts};
 })();
