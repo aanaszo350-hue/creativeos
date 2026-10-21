@@ -31,16 +31,7 @@
       for(const plan of data().winnerPlans||[]){
         const id=plan?.product_id;
         if(!id||ids.has(id))continue;
-        products.push({
-          id,
-          name:fallbackProductName(id,plan),
-          label:id==='coloringrobe'?'Bata para colorear':'Producto',
-          status:'Testing',
-          day:1,
-          testMax:7,
-          nicheSlugs:['general'],
-          brief:''
-        });
+        products.push({id,name:fallbackProductName(id,plan),label:id==='coloringrobe'?'Bata para colorear':'Producto',status:'Testing',day:1,testMax:7,nicheSlugs:['general'],brief:''});
         ids.add(id);
       }
       return {...snap,products};
@@ -48,10 +39,7 @@
     intel.__winnerProductUnionPatched=true;
   }
 
-  function refreshProductTabs(){
-    patchIntelligenceProducts();
-    document.dispatchEvent(new CustomEvent('creativeos:intelligence-render'));
-  }
+  function refreshProductTabs(){patchIntelligenceProducts();document.dispatchEvent(new CustomEvent('creativeos:intelligence-render'));}
 
   function repairSelection(){
     const host=document.getElementById('ciHost');
@@ -72,11 +60,7 @@
     if(e.target.closest?.('[data-ciw-close]')||e.target.classList?.contains('ciw-backdrop'))desiredAttemptModal=null;
   },true);
 
-  window.addEventListener('creativeos:winner-lab-updated',()=>{
-    desiredTrackId=wantedTrack();
-    refreshProductTabs();
-    if(window.CreativeOSSplitBoard?.version!=='4.0'){repairSelection();burstRepair();}
-  });
+  window.addEventListener('creativeos:winner-lab-updated',()=>{desiredTrackId=wantedTrack();refreshProductTabs();if(window.CreativeOSSplitBoard?.version!=='4.0'){repairSelection();burstRepair();}});
   const observer=new MutationObserver(()=>{const host=document.getElementById('ciHost');if(host?.dataset?.ciView==='winner-splits'&&window.CreativeOSSplitBoard?.version!=='4.0')scheduleRepair(0);});
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
@@ -97,13 +81,13 @@
     const script=document.createElement('script');script.src='./creativeos-product-radar.js?v=1';script.dataset.cosProductRadar='1';script.defer=true;document.head.appendChild(script);
   }
   function loadTesting(){
-    if(window.CreativeOSTesting?.version==='1.0')return;
-    if(document.querySelector('script[data-cos-testing]'))return;
-    const script=document.createElement('script');script.src='./creativeos-testing.js?v=1';script.dataset.cosTesting='1';script.defer=true;document.head.appendChild(script);
+    if(window.CreativeOSTesting?.version==='1.1')return;
+    document.querySelector('script[data-cos-testing]')?.remove();
+    const script=document.createElement('script');script.src='./creativeos-testing.js?v=2';script.dataset.cosTesting='1';script.defer=true;document.head.appendChild(script);
   }
 
   patchIntelligenceProducts();
   loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();
   document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.10',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts};
+  window.CreativeOSWinnerLabFixes={version:'1.11',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts};
 })();
