@@ -41,6 +41,15 @@
 
   function refreshProductTabs(){patchIntelligenceProducts();document.dispatchEvent(new CustomEvent('creativeos:intelligence-render'));}
 
+  async function refreshSplitTestsView(){
+    try{
+      await window.CreativeOSIntelligence?.refresh?.();
+      window.CreativeOSSplitTests?.render?.();
+    }catch(err){
+      console.error('CreativeOS Split Tests refresh failed',err);
+    }
+  }
+
   function repairSelection(){
     const host=document.getElementById('ciHost');
     if(host?.dataset?.ciView!=='winner-splits')return;
@@ -52,6 +61,7 @@
   }
 
   document.addEventListener('click',e=>{
+    const splitNav=e.target.closest?.('#cisSplitNav,[data-cis-split-route]');if(splitNav){setTimeout(refreshSplitTestsView,0);}
     const editWinner=e.target.closest?.('[data-ciw-edit-winner]');if(editWinner){const id=editWinner.dataset.ciwEditWinner;setTimeout(()=>{const input=document.getElementById('ciwWinnerName');if(!input||input.value.trim())return;const row=window.CreativeOSWinnerLab?.getData?.().winnerPlans?.find?.(w=>w.id===id);if(row?.name)input.value=row.name;},0);}
     const track=e.target.closest?.('[data-ciw-track]');if(track){desiredTrackId=track.dataset.ciwTrack||'';if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);if(window.CreativeOSSplitBoard?.version!=='4.0')burstRepair();}
     const newAttempt=e.target.closest?.('[data-ciw-new-attempt]');if(newAttempt){desiredTrackId=newAttempt.dataset.ciwNewAttempt||wantedTrack();if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);desiredAttemptModal={type:'new',trackId:desiredTrackId};setTimeout(()=>{if(document.getElementById('ciwModalRoot'))desiredAttemptModal=null;else burstRepair();},120);}
@@ -89,5 +99,5 @@
   patchIntelligenceProducts();
   loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();
   document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.11',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts};
+  window.CreativeOSWinnerLabFixes={version:'1.12',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts,refreshSplitTestsView};
 })();
