@@ -9,7 +9,7 @@
   function data(){return window.CreativeOSWinnerLab?.getData?.()||{winnerPlans:[],winnerTracks:[],winnerAttempts:[]};}
   function wantedTrack(){return sessionStorage.getItem('creativeos_winner_track')||desiredTrackId||'';}
   function scheduleRepair(delay=20){clearTimeout(repairTimer);repairTimer=setTimeout(repairSelection,delay);}
-  function burstRepair(){clearInterval(burstTimer);let ticks=0;burstTimer=setInterval(()=>{repairSelection();patchVisualHookUI();if(++ticks>=24){clearInterval(burstTimer);burstTimer=null;}},35);}
+  function burstRepair(){clearInterval(burstTimer);let ticks=0;burstTimer=setInterval(()=>{repairSelection();if(++ticks>=24){clearInterval(burstTimer);burstTimer=null;}},35);}
 
   function fallbackProductName(id,plan){
     if(id==='coloringrobe')return 'Coloring Robe';
@@ -50,26 +50,9 @@
     }
   }
 
-  function patchVisualHookUI(){
-    const host=document.getElementById('ciHost');
-    if(host?.dataset?.ciView!=='winner-splits')return;
-    host.querySelectorAll('.ciw-track-card[data-variable="visual_hook"]').forEach(card=>{
-      const title=card.querySelector('h3');if(title)title.textContent='Hook visual';
-      const icon=card.querySelector('.ciw-track-icon');if(icon)icon.textContent='⚡';
-    });
-    host.querySelectorAll('.ciw-tree-track[data-variable="visual_hook"] > span').forEach(el=>el.textContent='Hook visual');
-    const currentId=wantedTrack();
-    const current=(data().winnerTracks||[]).find(t=>t.id===currentId);
-    if(current?.variable==='visual_hook'){
-      host.querySelectorAll('#ciwTrackDetail .ciw-track-detail-head span').forEach(el=>el.textContent='⚡ Hook visual');
-      host.querySelectorAll('#ciwTrackDetail .ciw-track-detail-head p').forEach(el=>el.textContent='Aquí cambia únicamente la apertura visual; el resto del control se mantiene igual.');
-    }
-  }
-
   function repairSelection(){
     const host=document.getElementById('ciHost');
     if(host?.dataset?.ciView!=='winner-splits')return;
-    patchVisualHookUI();
     if(document.getElementById('ciwModalRoot')||document.getElementById('cos4Root'))return;
     const stored=wantedTrack();if(stored)desiredTrackId=stored;
     if(desiredTrackId){const active=document.querySelector('.ciw-track-card.active')?.dataset?.ciwTrack||'';const button=document.querySelector(`[data-ciw-track="${CSS.escape(desiredTrackId)}"]`);if(button&&active!==desiredTrackId){button.click();return;}}
@@ -80,15 +63,15 @@
   document.addEventListener('click',e=>{
     const splitNav=e.target.closest?.('#cisSplitNav,[data-cis-split-route]');if(splitNav){setTimeout(refreshSplitTestsView,0);}
     const editWinner=e.target.closest?.('[data-ciw-edit-winner]');if(editWinner){const id=editWinner.dataset.ciwEditWinner;setTimeout(()=>{const input=document.getElementById('ciwWinnerName');if(!input||input.value.trim())return;const row=window.CreativeOSWinnerLab?.getData?.().winnerPlans?.find?.(w=>w.id===id);if(row?.name)input.value=row.name;},0);}
-    const track=e.target.closest?.('[data-ciw-track]');if(track){desiredTrackId=track.dataset.ciwTrack||'';if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);if(window.CreativeOSSplitBoard?.version!=='4.0')burstRepair();setTimeout(patchVisualHookUI,0);}
+    const track=e.target.closest?.('[data-ciw-track]');if(track){desiredTrackId=track.dataset.ciwTrack||'';if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);if(window.CreativeOSSplitBoard?.version!=='4.0')burstRepair();}
     const newAttempt=e.target.closest?.('[data-ciw-new-attempt]');if(newAttempt){desiredTrackId=newAttempt.dataset.ciwNewAttempt||wantedTrack();if(desiredTrackId)sessionStorage.setItem('creativeos_winner_track',desiredTrackId);desiredAttemptModal={type:'new',trackId:desiredTrackId};setTimeout(()=>{if(document.getElementById('ciwModalRoot'))desiredAttemptModal=null;else burstRepair();},120);}
     const dataAttempt=e.target.closest?.('[data-ciw-data-attempt]');if(dataAttempt){const attemptId=dataAttempt.dataset.ciwDataAttempt;const row=data().winnerAttempts?.find?.(a=>a.id===attemptId);if(row?.track_id){desiredTrackId=row.track_id;sessionStorage.setItem('creativeos_winner_track',desiredTrackId);}desiredAttemptModal={type:'data',attemptId};setTimeout(()=>{if(document.getElementById('ciwModalRoot'))desiredAttemptModal=null;else burstRepair();},120);}
     if(e.target.closest?.('[data-ciw-save-attempt]')||e.target.closest?.('[data-ciw-save-data]')||e.target.closest?.('[data-ciw-best-attempt]'))burstRepair();
     if(e.target.closest?.('[data-ciw-close]')||e.target.classList?.contains('ciw-backdrop'))desiredAttemptModal=null;
   },true);
 
-  window.addEventListener('creativeos:winner-lab-updated',()=>{desiredTrackId=wantedTrack();refreshProductTabs();patchVisualHookUI();if(window.CreativeOSSplitBoard?.version!=='4.0'){repairSelection();burstRepair();}});
-  const observer=new MutationObserver(()=>{const host=document.getElementById('ciHost');if(host?.dataset?.ciView==='winner-splits'){patchVisualHookUI();if(window.CreativeOSSplitBoard?.version!=='4.0')scheduleRepair(0);}});
+  window.addEventListener('creativeos:winner-lab-updated',()=>{desiredTrackId=wantedTrack();refreshProductTabs();if(window.CreativeOSSplitBoard?.version!=='4.0'){repairSelection();burstRepair();}});
+  const observer=new MutationObserver(()=>{const host=document.getElementById('ciHost');if(host?.dataset?.ciView==='winner-splits'&&window.CreativeOSSplitBoard?.version!=='4.0')scheduleRepair(0);});
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
   function loadSplitGroups(){
@@ -115,6 +98,6 @@
 
   patchIntelligenceProducts();
   loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();
-  document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();patchVisualHookUI();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.13',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts,refreshSplitTestsView,patchVisualHookUI};
+  document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();},{once:true});
+  window.CreativeOSWinnerLabFixes={version:'1.12',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts,refreshSplitTestsView};
 })();
