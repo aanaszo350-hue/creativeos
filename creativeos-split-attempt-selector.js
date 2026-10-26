@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitAttemptSelector?.version === '1.0') return;
+  if (window.CreativeOSSplitAttemptSelector?.version === '1.1') return;
 
   const KEY_PREFIX = 'creativeos_winner_attempt:';
   const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -25,7 +25,8 @@
 
   function patchGetData() {
     const lab = window.CreativeOSWinnerLab;
-    if (!lab?.getData || lab.__attemptSelectorPatched) return false;
+    if (!lab?.getData) return false;
+    if (lab.__attemptSelectorPatched) return true;
     const original = lab.getData.bind(lab);
     lab.__attemptSelectorOriginalGetData = original;
     lab.getData = () => {
@@ -94,11 +95,16 @@
       if (tabs) tabs.insertAdjacentElement('beforebegin', box);
       else root.querySelector('.cos4-panel')?.prepend(box);
     }
-    box.innerHTML = `<div class="cos6-attempt-switcher-head"><small>Variantes dentro de este pilar</small><b>${aa.length} intentos</b></div><div class="cos6-attempt-list">${aa.map((a,i)=>`<button class="cos6-attempt-btn ${a.id===selected?'active':''}" data-cos6-attempt="${esc(a.id)}" data-cos6-track="${esc(trackId)}"><span class="cos6-attempt-num">${String(i+1).padStart(2,'0')}</span><span class="cos6-attempt-copy"><b>${esc(compactTitle(a.title)||`Intento ${i+1}`)}</b><span>${esc(productionLabel(a.production_status))}</span></span></button>`).join('')}</div>`;
+    const signature = [selected, ...aa.map(a => `${a.id}:${a.production_status}:${a.title}`)].join('|');
+    if (box.dataset.signature !== signature) {
+      box.dataset.signature = signature;
+      box.innerHTML = `<div class="cos6-attempt-switcher-head"><small>Variantes dentro de este pilar</small><b>${aa.length} intentos</b></div><div class="cos6-attempt-list">${aa.map((a,i)=>`<button class="cos6-attempt-btn ${a.id===selected?'active':''}" data-cos6-attempt="${esc(a.id)}" data-cos6-track="${esc(trackId)}"><span class="cos6-attempt-num">${String(i+1).padStart(2,'0')}</span><span class="cos6-attempt-copy"><b>${esc(compactTitle(a.title)||`Intento ${i+1}`)}</b><span>${esc(productionLabel(a.production_status))}</span></span></button>`).join('')}</div>`;
+    }
 
     const chosen = aa.find(a => a.id === selected) || aa[0];
     const kicker = root.querySelector('.cos4-kicker');
-    if (kicker) kicker.textContent = `Ficha del split · ${aa.length} variantes · viendo ${aa.indexOf(chosen)+1}/${aa.length}`;
+    const kickerText = `Ficha del split · ${aa.length} variantes · viendo ${aa.indexOf(chosen)+1}/${aa.length}`;
+    if (kicker && kicker.textContent !== kickerText) kicker.textContent = kickerText;
   }
 
   function injectPinterestPrompt(root) {
@@ -109,7 +115,13 @@
     const selected = selectedId(trackId, aa);
     const a = aa.find(x => x.id === selected) || aa[0];
     const prompt = a?.content?.pinterest_prompt;
-    if (!prompt || root.querySelector('.cos6-pinterest-prompt')) return;
+    const existing = root.querySelector('.cos6-pinterest-prompt');
+    if (!prompt) { existing?.remove(); return; }
+    if (existing) {
+      const p = existing.querySelector('p');
+      if (p && p.textContent !== prompt) p.textContent = prompt;
+      return;
+    }
 
     const card = document.createElement('section');
     card.className = 'cos4-card wide cos6-pinterest-prompt';
@@ -154,5 +166,5 @@
   }
   boot();
 
-  window.CreativeOSSplitAttemptSelector = {version:'1.0', decorate};
+  window.CreativeOSSplitAttemptSelector = {version:'1.1', decorate};
 })();
