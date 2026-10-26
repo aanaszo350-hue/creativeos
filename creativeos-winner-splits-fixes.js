@@ -74,14 +74,19 @@
   const observer=new MutationObserver(()=>{const host=document.getElementById('ciHost');if(host?.dataset?.ciView==='winner-splits'&&window.CreativeOSSplitBoard?.version!=='4.0')scheduleRepair(0);});
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
 
+  function loadAttemptSelector(){
+    if(window.CreativeOSSplitAttemptSelector?.version==='1.0')return;
+    if(document.querySelector('script[data-cos-attempt-selector]'))return;
+    const script=document.createElement('script');script.src='./creativeos-split-attempt-selector.js?v=1';script.dataset.cosAttemptSelector='1';script.defer=true;document.head.appendChild(script);
+  }
   function loadSplitGroups(){
-    if(window.CreativeOSSplitSheetGroups?.version==='1.2')return;
+    if(window.CreativeOSSplitSheetGroups?.version==='1.2'){loadAttemptSelector();return;}
     const old=document.querySelector('script[data-cos-split-groups]');old?.remove();
-    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=3';script.dataset.cosSplitGroups='1';script.defer=true;document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=3';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
   }
   function loadSplitBoard(){
-    if(window.CreativeOSSplitBoard?.version==='4.0'){loadSplitGroups();return;}
-    if(document.querySelector('script[data-cos-split-board-v4]')){loadSplitGroups();return;}
+    if(window.CreativeOSSplitBoard?.version==='4.0'){loadSplitGroups();loadAttemptSelector();return;}
+    if(document.querySelector('script[data-cos-split-board-v4]')){loadSplitGroups();loadAttemptSelector();return;}
     document.querySelector('script[data-cos-split-board-v3]')?.remove();
     const script=document.createElement('script');script.src='./creativeos-split-board-v3.js?v=2';script.dataset.cosSplitBoardV4='1';script.defer=true;script.addEventListener('load',loadSplitGroups,{once:true});document.head.appendChild(script);
   }
@@ -97,7 +102,7 @@
   }
 
   patchIntelligenceProducts();
-  loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();
-  document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadProductRadar();loadTesting();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.12',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadProductRadar,loadTesting,patchIntelligenceProducts,refreshSplitTestsView};
+  loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();
+  document.addEventListener('DOMContentLoaded',()=>{patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();},{once:true});
+  window.CreativeOSWinnerLabFixes={version:'1.13',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadAttemptSelector,loadProductRadar,loadTesting,patchIntelligenceProducts,refreshSplitTestsView};
 })();
