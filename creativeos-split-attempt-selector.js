@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitAttemptSelector?.version === '1.2') return;
+  if (window.CreativeOSSplitAttemptSelector?.version === '1.3') return;
 
   const KEY_PREFIX = 'creativeos_winner_attempt:';
   const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -62,7 +62,7 @@
       .cos6-attempt-num{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:rgba(255,255,255,.05);font-size:8px;font-weight:900;color:var(--c)}
       .cos6-attempt-copy{min-width:0}.cos6-attempt-copy b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8px;color:inherit}.cos6-attempt-copy span{display:block;margin-top:2px;font-size:7px;color:#657387}
       .cos6-pinterest-prompt p{font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important;color:#d9cbff!important;background:rgba(167,139,250,.07);padding:9px;border-radius:8px}
-      .cos6-reference-link a{display:inline-flex;align-items:center;gap:6px;color:#c7ccff;text-decoration:none;font-weight:800}.cos6-reference-link a:hover{text-decoration:underline;color:#fff}
+      .cos6-link-group{--g:#818cf8!important;--gs:rgba(129,140,248,.07)!important}.cos6-link-group .cos5-group-grid{grid-template-columns:1fr}.cos6-link-card{grid-column:1/-1!important}.cos6-link-card a{display:inline-flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid rgba(129,140,248,.28);border-radius:10px;background:rgba(129,140,248,.09);color:#d7dcff;text-decoration:none;font-weight:850;word-break:break-all}.cos6-link-card a:hover{border-color:#9aa5ff;background:rgba(129,140,248,.15);color:#fff}
       @media(max-width:720px){.cos6-attempt-switcher{margin:10px 14px 0}.cos6-attempt-btn{min-width:100%;max-width:none}}
     `;
     document.head.appendChild(s);
@@ -150,34 +150,27 @@
     const selected = selectedId(trackId, aa);
     const a = aa.find(x => x.id === selected) || aa[0];
     const url = safeReferenceUrl(a?.content?.reference_url);
-    const existing = root.querySelector('.cos6-reference-link');
-    if (!url) { existing?.remove(); return; }
-    if (existing) {
-      const link = existing.querySelector('a');
-      if (link && link.href !== url) link.href = url;
-      return;
+    const oldCard = root.querySelector('.cos6-reference-link');
+    oldCard?.remove();
+    let group = root.querySelector('.cos6-link-group');
+    if (!url) { group?.remove(); return; }
+
+    const stack = root.querySelector('[data-cos4-view="sheet"] .cos5-sheet-stack');
+    if (!stack) return;
+    if (!group) {
+      group = document.createElement('section');
+      group.className = 'cos5-group cos6-link-group';
+      group.dataset.group = 'link';
+      group.innerHTML = '<div class="cos5-group-head"><div class="cos5-group-icon">↗</div><div class="cos5-group-title"><small>BLOQUE</small><h3>Link</h3></div></div><div class="cos5-group-grid"></div>';
+      const strategy = stack.querySelector('.cos5-group[data-group="strategy"]');
+      if (strategy) stack.insertBefore(group,strategy); else stack.appendChild(group);
     }
 
+    const label = a?.content?.reference_label || 'Abrir Reel de referencia';
     const card = document.createElement('section');
-    card.className = 'cos4-card wide cos6-reference-link';
-    const label = a?.content?.reference_label || 'Abrir referencia';
-    card.innerHTML = `<small>Referencia · Reel</small><p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></p>`;
-    const refs = root.querySelector('.cos5-group[data-group="refs"] .cos5-group-grid');
-    if (refs) { refs.prepend(card); return; }
-    const sheetStack = root.querySelector('[data-cos4-view="sheet"] .cos5-sheet-stack');
-    if (sheetStack) {
-      const section = document.createElement('section');
-      section.className = 'cos5-group';
-      section.dataset.group = 'refs';
-      section.style.setProperty('--g','#818cf8');
-      section.style.setProperty('--gs','rgba(129,140,248,.07)');
-      section.innerHTML = '<div class="cos5-group-head"><div class="cos5-group-icon">⌕</div><div class="cos5-group-title"><small>BLOQUE</small><h3>Referencias</h3></div></div><div class="cos5-group-grid"></div>';
-      section.querySelector('.cos5-group-grid').appendChild(card);
-      sheetStack.appendChild(section);
-      return;
-    }
-    const grid = root.querySelector('[data-cos4-view="sheet"] > .cos4-grid');
-    if (grid) grid.appendChild(card);
+    card.className = 'cos4-card full cos6-link-card';
+    card.innerHTML = `<small>Enlace del vídeo</small><p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></p>`;
+    group.querySelector('.cos5-group-grid').replaceChildren(card);
   }
 
   function decorate() {
@@ -215,5 +208,5 @@
   }
   boot();
 
-  window.CreativeOSSplitAttemptSelector = {version:'1.2', decorate};
+  window.CreativeOSSplitAttemptSelector = {version:'1.3', decorate};
 })();
