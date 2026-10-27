@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitAttemptSelector?.version === '1.1') return;
+  if (window.CreativeOSSplitAttemptSelector?.version === '1.2') return;
 
   const KEY_PREFIX = 'creativeos_winner_attempt:';
   const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -62,6 +62,7 @@
       .cos6-attempt-num{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:rgba(255,255,255,.05);font-size:8px;font-weight:900;color:var(--c)}
       .cos6-attempt-copy{min-width:0}.cos6-attempt-copy b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8px;color:inherit}.cos6-attempt-copy span{display:block;margin-top:2px;font-size:7px;color:#657387}
       .cos6-pinterest-prompt p{font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important;color:#d9cbff!important;background:rgba(167,139,250,.07);padding:9px;border-radius:8px}
+      .cos6-reference-link a{display:inline-flex;align-items:center;gap:6px;color:#c7ccff;text-decoration:none;font-weight:800}.cos6-reference-link a:hover{text-decoration:underline;color:#fff}
       @media(max-width:720px){.cos6-attempt-switcher{margin:10px 14px 0}.cos6-attempt-btn{min-width:100%;max-width:none}}
     `;
     document.head.appendChild(s);
@@ -132,6 +133,53 @@
     if (grid) grid.appendChild(card);
   }
 
+  function safeReferenceUrl(value='') {
+    try {
+      const u = new URL(String(value || ''));
+      return /^https?:$/.test(u.protocol) ? u.href : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function injectReferenceLink(root) {
+    const trackId = currentTrackId();
+    if (!root || !trackId) return;
+    const d = window.CreativeOSWinnerLab?.getData?.() || rawData();
+    const aa = attemptsFor(trackId, d);
+    const selected = selectedId(trackId, aa);
+    const a = aa.find(x => x.id === selected) || aa[0];
+    const url = safeReferenceUrl(a?.content?.reference_url);
+    const existing = root.querySelector('.cos6-reference-link');
+    if (!url) { existing?.remove(); return; }
+    if (existing) {
+      const link = existing.querySelector('a');
+      if (link && link.href !== url) link.href = url;
+      return;
+    }
+
+    const card = document.createElement('section');
+    card.className = 'cos4-card wide cos6-reference-link';
+    const label = a?.content?.reference_label || 'Abrir referencia';
+    card.innerHTML = `<small>Referencia · Reel</small><p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></p>`;
+    const refs = root.querySelector('.cos5-group[data-group="refs"] .cos5-group-grid');
+    if (refs) { refs.prepend(card); return; }
+    const sheetStack = root.querySelector('[data-cos4-view="sheet"] .cos5-sheet-stack');
+    if (sheetStack) {
+      const section = document.createElement('section');
+      section.className = 'cos5-group';
+      section.dataset.group = 'refs';
+      section.style.setProperty('--g','#818cf8');
+      section.style.setProperty('--gs','rgba(129,140,248,.07)');
+      section.innerHTML = '<div class="cos5-group-head"><div class="cos5-group-icon">⌕</div><div class="cos5-group-title"><small>BLOQUE</small><h3>Referencias</h3></div></div><div class="cos5-group-grid"></div>';
+      section.querySelector('.cos5-group-grid').appendChild(card);
+      sheetStack.appendChild(section);
+      return;
+    }
+    const grid = root.querySelector('[data-cos4-view="sheet"] > .cos4-grid');
+    if (grid) grid.appendChild(card);
+  }
+
   function decorate() {
     patchGetData();
     injectCss();
@@ -139,6 +187,7 @@
     if (!root) return;
     injectAttemptSwitcher(root);
     injectPinterestPrompt(root);
+    injectReferenceLink(root);
   }
 
   document.addEventListener('click', e => {
@@ -166,5 +215,5 @@
   }
   boot();
 
-  window.CreativeOSSplitAttemptSelector = {version:'1.1', decorate};
+  window.CreativeOSSplitAttemptSelector = {version:'1.2', decorate};
 })();
