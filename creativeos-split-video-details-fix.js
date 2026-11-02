@@ -3,6 +3,7 @@
 
   const esc=(v='')=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','>':'&gt;','<':'&lt;','"':'&quot;',"'":'&#39;'}[m]));
   const data=()=>window.CreativeOSWinnerLab?.getData?.()||{winnerTracks:[],winnerAttempts:[]};
+  let patchTimer=null;
 
   function currentVideoSplit(){
     const trackId=sessionStorage.getItem('creativeos_winner_track')||'';
@@ -51,20 +52,24 @@
     parts.push(card('Referencia',c.reference_status,'wide'));
 
     const html=parts.filter(Boolean).join('');
-    if(html)grid.innerHTML=html;
+    if(html&&grid.dataset.videoDetailsPatched!==attempt?.id){
+      grid.innerHTML=html;
+      grid.dataset.videoDetailsPatched=attempt?.id||'1';
+    }
+  }
+
+  function schedulePatch(delay=0){
+    clearTimeout(patchTimer);
+    patchTimer=setTimeout(()=>requestAnimationFrame(patchModal),delay);
   }
 
   document.addEventListener('click',e=>{
-    if(e.target.closest?.('.ciw-track-card[data-ciw-track]'))setTimeout(patchModal,0);
+    if(e.target.closest?.('.ciw-track-card[data-ciw-track]'))schedulePatch(0);
   },true);
 
-  const observer=new MutationObserver(muts=>{
-    if(muts.some(m=>[...m.addedNodes].some(n=>n?.id==='cos4Root'||n?.querySelector?.('#cos4Root'))))setTimeout(patchModal,0);
-  });
-  if(document.body)observer.observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('creativeos:intelligence-render',()=>schedulePatch(20));
+  window.addEventListener('creativeos:winner-lab-updated',()=>schedulePatch(20));
+  schedulePatch(120);
 
-  window.addEventListener('creativeos:winner-lab-updated',()=>setTimeout(patchModal,0));
-  setTimeout(patchModal,150);
-
-  window.CreativeOSSplitVideoDetails={version:'1.0',patchModal};
+  window.CreativeOSSplitVideoDetails={version:'1.1',patchModal,schedulePatch};
 })();
