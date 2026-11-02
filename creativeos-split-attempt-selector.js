@@ -1,12 +1,13 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitAttemptSelector?.version === '1.3') return;
+  if (window.CreativeOSSplitAttemptSelector?.version === '1.4') return;
 
   const KEY_PREFIX = 'creativeos_winner_attempt:';
   const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const key = trackId => KEY_PREFIX + trackId;
   const rawData = () => window.CreativeOSWinnerLab?.__attemptSelectorOriginalGetData?.() || window.CreativeOSWinnerLab?.getData?.() || {winnerTracks:[],winnerAttempts:[]};
   const currentTrackId = () => sessionStorage.getItem('creativeos_winner_track') || '';
+  let decorateTimer=null;
 
   function attemptsFor(trackId, source = rawData()) {
     return (source.winnerAttempts || [])
@@ -183,30 +184,37 @@
     injectReferenceLink(root);
   }
 
+  function scheduleDecorate(delay=0){
+    clearTimeout(decorateTimer);
+    decorateTimer=setTimeout(()=>requestAnimationFrame(decorate),delay);
+  }
+
   document.addEventListener('click', e => {
     const btn = e.target.closest?.('[data-cos6-attempt]');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const trackId = btn.dataset.cos6Track || currentTrackId();
-    const attemptId = btn.dataset.cos6Attempt || '';
-    if (!trackId || !attemptId) return;
-    sessionStorage.setItem(key(trackId), attemptId);
-    sessionStorage.setItem('creativeos_winner_track', trackId);
-    window.CreativeOSSplitBoard?.openTrack?.(trackId);
-    setTimeout(decorate, 30);
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const trackId = btn.dataset.cos6Track || currentTrackId();
+      const attemptId = btn.dataset.cos6Attempt || '';
+      if (!trackId || !attemptId) return;
+      sessionStorage.setItem(key(trackId), attemptId);
+      sessionStorage.setItem('creativeos_winner_track', trackId);
+      window.CreativeOSSplitBoard?.openTrack?.(trackId);
+      scheduleDecorate(25);
+      window.CreativeOSSplitSheetGroups?.scheduleScan?.(30);
+      return;
+    }
+    if(e.target.closest?.('.ciw-track-card[data-ciw-track]'))scheduleDecorate(25);
   }, true);
 
-  const mo = new MutationObserver(() => requestAnimationFrame(decorate));
-  if (document.body) mo.observe(document.body, {childList:true, subtree:true});
-  window.addEventListener('creativeos:winner-lab-updated', () => setTimeout(decorate, 40));
-  document.addEventListener('creativeos:intelligence-render', () => setTimeout(decorate, 40));
+  window.addEventListener('creativeos:winner-lab-updated', () => scheduleDecorate(40));
+  document.addEventListener('creativeos:intelligence-render', () => scheduleDecorate(40));
 
   function boot(tries=0) {
-    if (patchGetData()) { decorate(); return; }
+    if (patchGetData()) { scheduleDecorate(0); return; }
     if (tries < 40) setTimeout(() => boot(tries+1), 100);
   }
   boot();
 
-  window.CreativeOSSplitAttemptSelector = {version:'1.3', decorate};
+  window.CreativeOSSplitAttemptSelector = {version:'1.4', decorate, scheduleDecorate};
 })();
