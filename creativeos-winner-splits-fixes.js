@@ -96,36 +96,6 @@
     const old=document.querySelector('script[data-cos-split-groups]');old?.remove();
     const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=4';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
   }
-
-  function installSplitObserverGuard(){
-    if(window.__creativeOSSplitObserverGuard)return;
-    const NativeMutationObserver=window.MutationObserver;
-    if(!NativeMutationObserver)return;
-    window.__creativeOSSplitObserverGuard=true;
-    window.MutationObserver=class CreativeOSMutationObserver extends NativeMutationObserver{
-      observe(target,options){
-        const isDangerousSplitObserver=window.__creativeOSLoadingSplitBoard===true&&target===document.body&&options?.childList===true&&options?.subtree===true;
-        if(isDangerousSplitObserver)return;
-        return super.observe(target,options);
-      }
-    };
-  }
-
-  function loadSplitBoard(){
-    if(window.CreativeOSSplitBoard?.version==='4.0'){loadSplitGroups();loadAttemptSelector();return;}
-    if(document.querySelector('script[data-cos-split-board-v4]')){loadSplitGroups();loadAttemptSelector();return;}
-    installSplitObserverGuard();
-    document.querySelector('script[data-cos-split-board-v3]')?.remove();
-    window.__creativeOSLoadingSplitBoard=true;
-    const script=document.createElement('script');
-    script.src='./creativeos-split-board-v3.js?v=3';
-    script.dataset.cosSplitBoardV4='1';
-    script.defer=true;
-    const done=()=>{window.__creativeOSLoadingSplitBoard=false;};
-    script.addEventListener('load',()=>{done();loadSplitGroups();loadAttemptSelector();},{once:true});
-    script.addEventListener('error',done,{once:true});
-    document.head.appendChild(script);
-  }
   function loadProductRadar(){
     if(window.CreativeOSProductRadar?.version==='1.0')return;
     if(document.querySelector('script[data-cos-product-radar]'))return;
@@ -143,6 +113,46 @@
     script.src='./creativeos-split-video-details-fix.js?v=2';
     script.dataset.cosVideoDetails='1';
     script.defer=true;
+    document.head.appendChild(script);
+  }
+  function loadDependentModules(){
+    loadSplitGroups();
+    loadProductRadar();
+    loadTesting();
+    loadVideoDetails();
+  }
+
+  function installSplitObserverGuard(){
+    if(window.__creativeOSSplitObserverGuard)return;
+    const NativeMutationObserver=window.MutationObserver;
+    if(!NativeMutationObserver)return;
+    window.__creativeOSSplitObserverGuard=true;
+    window.MutationObserver=class CreativeOSMutationObserver extends NativeMutationObserver{
+      observe(target,options){
+        const isDangerousSplitObserver=window.__creativeOSLoadingSplitBoard===true&&target===document.body&&options?.childList===true&&options?.subtree===true;
+        if(isDangerousSplitObserver)return;
+        return super.observe(target,options);
+      }
+    };
+  }
+
+  function loadSplitBoard(){
+    if(window.CreativeOSSplitBoard?.version==='4.0'){loadDependentModules();return;}
+    installSplitObserverGuard();
+    const existing=document.querySelector('script[data-cos-split-board-v4]');
+    if(existing){
+      existing.addEventListener('load',loadDependentModules,{once:true});
+      return;
+    }
+    document.querySelector('script[data-cos-split-board-v3]')?.remove();
+    window.__creativeOSLoadingSplitBoard=true;
+    const script=document.createElement('script');
+    script.src='./creativeos-split-board-v3.js?v=3';
+    script.dataset.cosSplitBoardV4='1';
+    script.defer=true;
+    const done=()=>{window.__creativeOSLoadingSplitBoard=false;};
+    script.addEventListener('load',()=>{done();loadDependentModules();},{once:true});
+    script.addEventListener('error',done,{once:true});
     document.head.appendChild(script);
   }
 
@@ -173,8 +183,8 @@
 
   installSplitObserverGuard();
   patchIntelligenceProducts();
-  loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();loadVideoDetails();
+  loadSplitBoard();
   installPerformanceGuard();
-  document.addEventListener('DOMContentLoaded',()=>{installSplitObserverGuard();patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();loadVideoDetails();installPerformanceGuard();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.19',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadAttemptSelector,loadProductRadar,loadTesting,loadVideoDetails,patchIntelligenceProducts,refreshSplitTestsView};
+  document.addEventListener('DOMContentLoaded',()=>{installSplitObserverGuard();patchIntelligenceProducts();loadSplitBoard();installPerformanceGuard();},{once:true});
+  window.CreativeOSWinnerLabFixes={version:'1.20',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadAttemptSelector,loadProductRadar,loadTesting,loadVideoDetails,patchIntelligenceProducts,refreshSplitTestsView};
 })();
