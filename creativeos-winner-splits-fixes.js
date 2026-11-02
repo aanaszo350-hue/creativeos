@@ -87,14 +87,14 @@
   window.addEventListener('creativeos:winner-lab-updated',()=>{desiredTrackId=wantedTrack();refreshProductTabs();});
 
   function loadAttemptSelector(){
-    if(window.CreativeOSSplitAttemptSelector?.version==='1.2')return;
+    if(window.CreativeOSSplitAttemptSelector?.version==='1.4')return;
     document.querySelector('script[data-cos-attempt-selector]')?.remove();
-    const script=document.createElement('script');script.src='./creativeos-split-attempt-selector.js?v=3';script.dataset.cosAttemptSelector='1';script.defer=true;document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-split-attempt-selector.js?v=4';script.dataset.cosAttemptSelector='1';script.defer=true;document.head.appendChild(script);
   }
   function loadSplitGroups(){
-    if(window.CreativeOSSplitSheetGroups?.version==='1.2'){loadAttemptSelector();return;}
+    if(window.CreativeOSSplitSheetGroups?.version==='1.3'){loadAttemptSelector();return;}
     const old=document.querySelector('script[data-cos-split-groups]');old?.remove();
-    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=3';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=4';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
   }
 
   function installSplitObserverGuard(){
@@ -176,5 +176,5 @@
   loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();loadVideoDetails();
   installPerformanceGuard();
   document.addEventListener('DOMContentLoaded',()=>{installSplitObserverGuard();patchIntelligenceProducts();loadSplitBoard();loadSplitGroups();loadAttemptSelector();loadProductRadar();loadTesting();loadVideoDetails();installPerformanceGuard();},{once:true});
-  window.CreativeOSWinnerLabFixes={version:'1.18',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadAttemptSelector,loadProductRadar,loadTesting,loadVideoDetails,patchIntelligenceProducts,refreshSplitTestsView};
+  window.CreativeOSWinnerLabFixes={version:'1.19',repairSelection,burstRepair,loadSplitBoard,loadSplitGroups,loadAttemptSelector,loadProductRadar,loadTesting,loadVideoDetails,patchIntelligenceProducts,refreshSplitTestsView};
 })();
