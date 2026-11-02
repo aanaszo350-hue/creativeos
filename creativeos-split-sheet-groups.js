@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CreativeOSSplitSheetGroups?.version === '1.2') return;
+  if (window.CreativeOSSplitSheetGroups?.version === '1.3') return;
 
   const GROUPS = {
     summary: { label: 'Resumen del test', icon: '◇', color: '#94a3b8', soft: 'rgba(148,163,184,.07)' },
@@ -12,6 +12,8 @@
     refs: { label: 'Referencias', icon: '⌕', color: '#818cf8', soft: 'rgba(129,140,248,.07)' },
     strategy: { label: 'Estrategia / Aprendizaje', icon: '✦', color: '#34d399', soft: 'rgba(52,211,153,.065)' }
   };
+
+  let scanTimer=null;
 
   function injectCss() {
     if (document.getElementById('cos5GroupStyle')) return;
@@ -109,7 +111,16 @@
     for(const k of groupOrder(type)){addGroup(k,buckets.get(k));buckets.delete(k)} for(const [k,v] of buckets)addGroup(k,v);
     grid.dataset.cos5Grouped='1';grid.replaceWith(stack);
   }
+
   function scan(){injectCss();decorateBoard();const root=document.getElementById('cos4Root');if(root)groupSheet(root)}
-  const observer=new MutationObserver(scan);if(document.body)observer.observe(document.body,{childList:true,subtree:true});scan();
-  window.CreativeOSSplitSheetGroups={version:'1.2',scan};
+  function scheduleScan(delay=0){clearTimeout(scanTimer);scanTimer=setTimeout(()=>requestAnimationFrame(scan),delay)}
+
+  document.addEventListener('click',e=>{
+    if(e.target.closest?.('.ciw-track-card[data-ciw-track],[data-cos6-attempt]'))scheduleScan(20);
+  },true);
+  window.addEventListener('creativeos:winner-lab-updated',()=>scheduleScan(30));
+  document.addEventListener('creativeos:intelligence-render',()=>scheduleScan(30));
+  scheduleScan(80);
+
+  window.CreativeOSSplitSheetGroups={version:'1.3',scan,scheduleScan};
 })();
