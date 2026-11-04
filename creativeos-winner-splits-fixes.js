@@ -102,9 +102,9 @@
     const script=document.createElement('script');script.src='./creativeos-product-radar.js?v=1';script.dataset.cosProductRadar='1';script.defer=true;document.head.appendChild(script);
   }
   function loadTesting(){
-    if(window.CreativeOSTesting?.version==='1.4')return;
+    if(window.CreativeOSTesting?.version==='1.5')return;
     document.querySelector('script[data-cos-testing]')?.remove();
-    const script=document.createElement('script');script.src='./creativeos-testing.js?v=4';script.dataset.cosTesting='1';script.defer=true;document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-testing.js?v=5';script.dataset.cosTesting='1';script.defer=true;document.head.appendChild(script);
   }
   function loadVideoDetails(){
     if(window.CreativeOSSplitVideoDetails?.version==='1.1')return;
