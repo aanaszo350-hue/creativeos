@@ -119,6 +119,11 @@
   }
 
   function productTabs(){return`<div class="ciw-product-tabs">${products().map(p=>{const count=S.data.winnerPlans.filter(w=>w.product_id===p.id).length;return`<button class="${p.id===S.productId?'active':''}" data-ciw-product="${esc(p.id)}"><span>${esc(p.name)}</span><small>${count} split tests · Día ${fmt(p.day)}</small></button>`}).join('')}</div>`;}
+  function recentWinnerAccess(){
+    const latest=(S.data.winnerPlans||[]).slice().sort((a,b)=>String(b.created_at||b.winner_date||'').localeCompare(String(a.created_at||a.winner_date||''))).slice(0,5);
+    if(!latest.length)return '';
+    return `<section class="ciw-recent-splits" style="margin:8px 0 14px"><small style="color:#93a3ba;font-size:11px">Split Tests recientes · acceso directo</small><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${latest.map(w=>`<button type="button" data-ciw-open-recent="${esc(w.id)}" style="border:1px solid #34445e;background:#121a28;color:#f1f5fc;border-radius:10px;font-size:11px;padding:9px 11px;cursor:pointer">${esc(w.name)}</button>`).join('')}</div></section>`;
+  }
   function modeTabs(){return`<div class="ciw-mode-tabs"><button class="${S.mode==='panel'?'active':''}" data-ciw-mode="panel">Panel</button><button class="${S.mode==='tree'?'active':''}" data-ciw-mode="tree">Árbol</button><button class="${S.mode==='history'?'active':''}" data-ciw-mode="history">Cronología</button></div>`;}
 
   function render(){
@@ -127,7 +132,7 @@
     const p=product(S.productId);
     if(S.loading&&!S.data.winnerPlans.length){host.innerHTML='<div class="ci-loading">Cargando Split Tests…</div>';return;}
     const body=S.mode==='tree'?treeView():S.mode==='history'?historyView():panelView();
-    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Un vídeo ganador abre seis direcciones de optimización: concepto, texto, ángulo, fondo, música y avatar. Cada dirección puede tener todos los intentos que necesites.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} winners</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
+    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Un vídeo ganador abre seis direcciones de optimización: concepto, texto, ángulo, fondo, música y avatar. Cada dirección puede tener todos los intentos que necesites.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}${recentWinnerAccess()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} winners</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
   }
 
   function panelView(){
@@ -271,6 +276,12 @@
     const split=e.target.closest?.('#ciwSplitNav');if(split){e.preventDefault();e.stopImmediatePropagation();activate();return;}
     if(S.active&&e.target.closest?.('[data-ci-route]')){deactivate();return;}
     if(!S.active)return;
+    const recent=e.target.closest?.('[data-ciw-open-recent]');
+    if(recent){
+      const selected=winner(recent.dataset.ciwOpenRecent);
+      if(selected){S.productId=selected.product_id;S.winnerId=selected.id;S.trackId='';normalizeSelection();render();}
+      return;
+    }
     const productBtn=e.target.closest?.('[data-ciw-product]');if(productBtn){S.productId=productBtn.dataset.ciwProduct;S.winnerId='';S.trackId='';normalizeSelection();render();return;}
     const winnerBtn=e.target.closest?.('[data-ciw-winner]');if(winnerBtn){S.winnerId=winnerBtn.dataset.ciwWinner;S.trackId=tracks(S.winnerId)[0]?.id||'';normalizeSelection();render();return;}
     const trackBtn=e.target.closest?.('[data-ciw-track]');if(trackBtn){S.trackId=trackBtn.dataset.ciwTrack;sessionStorage.setItem('creativeos_winner_track',S.trackId);render();setTimeout(()=>document.getElementById('ciwTrackDetail')?.scrollIntoView({behavior:'smooth',block:'start'}),40);return;}
