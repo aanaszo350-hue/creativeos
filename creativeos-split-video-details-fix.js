@@ -48,7 +48,9 @@
     parts.push(card('Texto 1',c.text_1));
     parts.push(card('Texto 2',c.text_2));
     parts.push(card('CTA',c.cta));
-    parts.push(card('Vídeo de referencia',c.reference_url,'full'));
+    if(c.reference_url&&/^https?:\/\//.test(String(c.reference_url))){
+      parts.push(`<section class="cos4-card full"><small>Vídeo de referencia</small><p><a href="${esc(c.reference_url)}" target="_blank" rel="noopener noreferrer" style="color:#b9c8ff;text-decoration:underline">Abrir Reel de Instagram ↗</a></p></section>`);
+    }
     parts.push(card('Referencia',c.reference_status,'wide'));
 
     const html=parts.filter(Boolean).join('');
@@ -71,5 +73,5 @@
   window.addEventListener('creativeos:winner-lab-updated',()=>schedulePatch(20));
   schedulePatch(120);
 
-  window.CreativeOSSplitVideoDetails={version:'1.1',patchModal,schedulePatch};
+  window.CreativeOSSplitVideoDetails={version:'1.2',patchModal,schedulePatch};
 })();
