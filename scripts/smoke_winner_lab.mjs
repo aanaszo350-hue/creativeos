@@ -32,30 +32,7 @@ try{
   await waitFor(`window.CreativeOSWinnerLab?.version==='2.3'`,'winner lab');
   await waitFor(`!!document.querySelector('#ciwSplitNav')`,'split nav');
 
-  await click(`document.querySelector('[data-ci-route="avatars"]')`,'matrix nav');
-  await waitFor(`document.querySelectorAll('.cimx-product').length>=3`,'expected matrix products');
-  const varCount=await evalJS(`document.querySelector('.cimx-product')?.querySelectorAll('.cimx-var').length`);if(varCount!==6)throw new Error(`Matrix expected 6 variables, got ${varCount}`);
-  const colors=await evalJS(`Array.from(document.querySelectorAll('.cimx-product')).map(x=>getComputedStyle(x).getPropertyValue('--mx')).join('|')`);if(!colors.includes('#60a5fa')||!colors.includes('#a78bfa')||!colors.includes('#34d399'))throw new Error('Product visual isolation colors missing');
-
-  await click(`document.querySelector('.cimx-product [data-cimx-variable="concept"]')`,'concept matrix detail');
-  await waitFor(`!!document.querySelector('#cimxModalRoot')`,'matrix modal opens');
-  await click(`document.querySelector('#cimxModalRoot [data-cimx-close]')`,'matrix back');
-  await waitFor(`!document.querySelector('#cimxModalRoot')`,'matrix modal closes');
-
-  await click(`document.querySelector('.cimx-product [data-cimx-variable="concept"]')`,'concept detail again');
-  await waitFor(`!!document.querySelector('#cimxModalRoot [data-cimx-open-testing]')`,'open testing button');
-  await click(`document.querySelector('#cimxModalRoot [data-cimx-open-testing]')`,'open testing');
-  await waitFor(`document.querySelector('#ciHost')?.dataset?.ciView==='testing'`,'testing view');
-  await waitFor(`!!document.querySelector('.ci-workflow-shell')`,'product testing detail');
-
-  await click(`document.querySelector('[data-ci-route="avatars"]')`,'matrix again');
-  await waitFor(`!!document.querySelector('.cimx-product')`,'matrix rerendered');
-  const editableCard=await evalJS(`(()=>{const p=Array.from(document.querySelectorAll('.cimx-product')).find(x=>x.querySelector('[data-cimx-open-testing="strideshield"]'));return !!p?.querySelector('[data-cimx-variable="concept"]')})()`);if(!editableCard)throw new Error('Stride concept card missing');
-  await click(`Array.from(document.querySelectorAll('.cimx-product')).find(x=>x.querySelector('[data-cimx-open-testing="strideshield"]')).querySelector('[data-cimx-variable="concept"]')`,'Stride concept detail');
-  await waitFor(`!!document.querySelector('#cimxModalRoot')`,'Stride detail modal');
-  const hasWorkflowEdit=await evalJS(`!!document.querySelector('#cimxModalRoot [data-cimx-edit-workflow]')`);
-  if(hasWorkflowEdit){await click(`document.querySelector('#cimxModalRoot [data-cimx-edit-workflow]')`,'edit workflow');await waitFor(`!!document.querySelector('#ciWorkflowName')`,'workflow editor reachable');}
-
+  // Exercise Split Tests directly. Matrix UI has its own independent smoke coverage.
   await click(`document.querySelector('#ciwSplitNav')`,'winner split nav');
   await waitFor(`document.querySelector('#ciHost')?.dataset?.ciView==='winner-splits'`,'winner split view');
   await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
