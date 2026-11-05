@@ -33,12 +33,25 @@
   const fmt=n=>n===null||n===undefined||n===''?'—':Number(n).toLocaleString('es-ES');
   const uid=p=>`${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
   const core=()=>window.CreativeOSIntelligence?.getSnapshot?.()||{};
-  const products=()=>core().products||[];
+  const products=()=>{
+    const list=[...(core().products||[])];
+    const seen=new Set(list.map(p=>p?.id).filter(Boolean));
+    for(const plan of S.data.winnerPlans||[]){
+      if(!plan.product_id||seen.has(plan.product_id))continue;
+      const name=plan.baseline_dna?.product_name||String(plan.name||'').split('·')[0].trim()||plan.product_id;
+      list.push({id:plan.product_id,name,day:1,status:'Testing'});
+      seen.add(plan.product_id);
+    }
+    return list.sort((a,b)=>{
+      const latest=id=>Math.max(0,...(S.data.winnerPlans||[]).filter(x=>x.product_id===id).map(x=>Date.parse(x.winner_date||x.created_at||'1970-01-01')||0));
+      return latest(b.id)-latest(a.id);
+    });
+  };
   const product=id=>products().find(p=>p.id===id)||null;
   const varLabel=k=>VARS.find(v=>v[0]===k)?.[1]||k;
   const varIcon=k=>VARS.find(v=>v[0]===k)?.[2]||'•';
   const statusLabel=k=>k==='discarded'?'Descartado':STATUS.find(x=>x[0]===k)?.[1]||k||'Por preparar';
-  const plans=()=>S.data.winnerPlans.filter(x=>x.product_id===S.productId);
+  const plans=()=>S.data.winnerPlans.filter(x=>x.product_id===S.productId).slice().sort((a,b)=>String(b.winner_date||b.created_at||'').localeCompare(String(a.winner_date||a.created_at||''))||String(b.created_at||'').localeCompare(String(a.created_at||'')));
   const winner=id=>S.data.winnerPlans.find(x=>x.id===id)||null;
   const tracks=wid=>S.data.winnerTracks.filter(x=>x.winner_id===wid).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   const track=id=>S.data.winnerTracks.find(x=>x.id===id)||null;
@@ -105,7 +118,7 @@
     return`<video controls preload="metadata" src="${esc(url)}"></video>`;
   }
 
-  function productTabs(){return`<div class="ciw-product-tabs">${products().map(p=>`<button class="${p.id===S.productId?'active':''}" data-ciw-product="${esc(p.id)}"><span>${esc(p.name)}</span><small>Día ${fmt(p.day)}</small></button>`).join('')}</div>`;}
+  function productTabs(){return`<div class="ciw-product-tabs">${products().map(p=>{const count=S.data.winnerPlans.filter(w=>w.product_id===p.id).length;return`<button class="${p.id===S.productId?'active':''}" data-ciw-product="${esc(p.id)}"><span>${esc(p.name)}</span><small>${count} split tests · Día ${fmt(p.day)}</small></button>`}).join('')}</div>`;}
   function modeTabs(){return`<div class="ciw-mode-tabs"><button class="${S.mode==='panel'?'active':''}" data-ciw-mode="panel">Panel</button><button class="${S.mode==='tree'?'active':''}" data-ciw-mode="tree">Árbol</button><button class="${S.mode==='history'?'active':''}" data-ciw-mode="history">Cronología</button></div>`;}
 
   function render(){
@@ -129,7 +142,7 @@
     return`<section class="ciw-winner-card">
       <div class="ciw-winner-head">
         <div class="ciw-winner-media">${preview(w.video_url,w.video_name?.match(/\.(jpg|jpeg|png|webp)$/i)?'image/*':'video/*',w.video_name)}</div>
-        <div class="ciw-winner-info"><span class="ciw-kicker">Vídeo winner</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p><div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
+        <div class="ciw-winner-info"><span class="ciw-kicker">Vídeo winner</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
       </div>
       <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>Seis splits del mismo vídeo</h2><p>Cada bloque guarda sus propios intentos, estado, media, data y mejor variante.</p></div></div>
       <div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
@@ -285,5 +298,5 @@
   document.addEventListener('DOMContentLoaded',()=>{ensureNav();setTimeout(ensureNav,200);},{once:true});
   if(document.body){ensureNav();setTimeout(ensureNav,200);}
 
-  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.0'};
+  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.1'};
 })();
