@@ -29,11 +29,11 @@ try{
   await cdp('Page.enable');await cdp('Runtime.enable');
   await waitFor(`window.CreativeOSIntelligence?.version==='3.0'`,'core');
   await waitFor(`window.CreativeOSMatrixV2?.version==='2.0'`,'matrix v2');
-  await waitFor(`window.CreativeOSWinnerLab?.version==='2.0'`,'winner lab');
+  await waitFor(`window.CreativeOSWinnerLab?.version==='2.3'`,'winner lab');
   await waitFor(`!!document.querySelector('#ciwSplitNav')`,'split nav');
 
   await click(`document.querySelector('[data-ci-route="avatars"]')`,'matrix nav');
-  await waitFor(`document.querySelectorAll('.cimx-product').length===3`,'three matrix products');
+  await waitFor(`document.querySelectorAll('.cimx-product').length>=3`,'expected matrix products');
   const varCount=await evalJS(`document.querySelector('.cimx-product')?.querySelectorAll('.cimx-var').length`);if(varCount!==6)throw new Error(`Matrix expected 6 variables, got ${varCount}`);
   const colors=await evalJS(`Array.from(document.querySelectorAll('.cimx-product')).map(x=>getComputedStyle(x).getPropertyValue('--mx')).join('|')`);if(!colors.includes('#60a5fa')||!colors.includes('#a78bfa')||!colors.includes('#34d399'))throw new Error('Product visual isolation colors missing');
 
@@ -59,6 +59,15 @@ try{
   await click(`document.querySelector('#ciwSplitNav')`,'winner split nav');
   await waitFor(`document.querySelector('#ciHost')?.dataset?.ciView==='winner-splits'`,'winner split view');
   await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
+  await waitFor(`!!document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
+  await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===5`,'five visible car pillow split test cards');
+  const carPillowOK=await evalJS(`(()=>{
+    const s=document.querySelector('#ciHost')?.innerText||'';
+    return ['Vídeo 1 · Princesa copiloto','Vídeo 2 · Regalo princesa copiloto','Toda princesa copiloto necesita esto','utiliza el señor mayor','utiliza otra música'].every(t=>s.includes(t))
+    && [...document.querySelectorAll('.ciw-quick-split a')].length===5;
+  })()`);
+  if(!carPillowOK)throw new Error('Car pillow split tests missing text or Reel links');
   await click(`document.querySelector('[data-ciw-product="strideshield"]')`,'Stride winner product');
   await waitFor(`!!document.querySelector('[data-ciw-new-winner]')`,'winner lab ready');
   await click(`document.querySelector('[data-ciw-new-winner]')`,'new winner');
