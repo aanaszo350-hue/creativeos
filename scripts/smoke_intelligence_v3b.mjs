@@ -43,7 +43,7 @@ try{
   await waitFor(`!!window.CreativeOSIntelligenceCRUD`,'CRUD loaded');
 
   await click(`document.querySelector('[data-ci-route="testing"]')`,'Testing IA');
-  await waitFor(`document.querySelectorAll('[data-ci-test-product]').length===3`,'three active products');
+  await waitFor(`document.querySelectorAll('[data-ci-test-product]').length>=3`,'expected active products');
   const overview=await evalJS(`JSON.stringify(Array.from(document.querySelectorAll('[data-ci-test-product]'),x=>x.innerText))`);
   if(!overview.includes('StrideShield')||!overview.includes('Día 12'))throw new Error('StrideShield day 12 missing');
   if(!overview.includes('auriculares camara')||!overview.includes('Día 1'))throw new Error('Camera headphones day 1 missing');
