@@ -146,6 +146,20 @@
     return`${winnerRail(list,w)}${winnerDetail(w)}`;
   }
   function winnerRail(list,current){return`<div class="ciw-winner-rail">${list.map((w,i)=>`<button class="${w.id===current.id?'active':''}" data-ciw-winner="${esc(w.id)}"><span>Winner ${list.length-i}</span><b>${esc(w.name)}</b><small>${fmt(w.views)} views · ${w.winner_date||'Sin fecha'}</small></button>`).join('')}</div>`;}
+  function splitQuickList(w){
+    if(w.id!=='winner-carpillow-princess-viral-20261105')return '';
+    const all=tracks(w.id).flatMap(t=>attempts(t.id).filter(a=>!a.is_discarded).map(a=>({t,a})));
+    const names={concept:'Concepto',text_hook:'Texto',avatar:'Avatar',audio:'Música'};
+    const val=({t,a})=>{
+      const c=a.content||{};
+      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':a.title;
+    };
+    return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>5 Split Tests · Almohada de coche</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
+      const href=a.content?.reference_url||w.video_url||'';
+      return `<article class="ciw-quick-split"><div class="ciw-quick-split-type">${esc(names[t.variable]||varLabel(t.variable))} · ${i+1} de ${all.length}</div><b>${esc(a.title)}</b><p>${esc(val({t,a}))}</p><div class="ciw-quick-split-actions"><button type="button" data-ciw-track="${esc(t.id)}">Ver prueba</button>${/^https?:\/\//.test(href)?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}</div></article>`;
+    }).join('')}</div></section>`;
+  }
+
   function winnerDetail(w){
     const ts=tracks(w.id),selected=track(S.trackId)||ts[0]||null;
     return`<section class="ciw-winner-card">
@@ -154,7 +168,7 @@
         <div class="ciw-winner-info"><span class="ciw-kicker">Vídeo winner</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
       </div>
       <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>Seis splits del mismo vídeo</h2><p>Cada bloque guarda sus propios intentos, estado, media, data y mejor variante.</p></div></div>
-      <div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
+      ${splitQuickList(w)}<div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
       ${selected?trackDetail(selected):''}
     </section>`;
   }
@@ -313,5 +327,5 @@
   document.addEventListener('DOMContentLoaded',()=>{ensureNav();setTimeout(ensureNav,200);if(deepProduct)setTimeout(activate,350);},{once:true});
   if(document.body){ensureNav();setTimeout(ensureNav,200);if(deepProduct)setTimeout(activate,350);}
 
-  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.2'};
+  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.3'};
 })();
