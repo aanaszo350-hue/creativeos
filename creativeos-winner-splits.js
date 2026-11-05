@@ -18,9 +18,10 @@
     ['data_ready','Data lista']
   ];
 
+  const deepProduct=(new URLSearchParams(window.location.search)).get('split_product')||'';
   const S={
     active:false,
-    productId:sessionStorage.getItem('creativeos_winner_product')||'',
+    productId:deepProduct||sessionStorage.getItem('creativeos_winner_product')||'',
     winnerId:sessionStorage.getItem('creativeos_winner_id')||'',
     trackId:sessionStorage.getItem('creativeos_winner_track')||'',
     mode:sessionStorage.getItem('creativeos_winner_mode')||'panel',
@@ -75,7 +76,8 @@
   }
   function normalizeSelection(){
     const ps=products();
-    if(!ps.some(p=>p.id===S.productId))S.productId=ps[0]?.id||'';
+    if(deepProduct && !S.data.winnerPlans.length)S.productId=deepProduct;
+    else if(!ps.some(p=>p.id===S.productId))S.productId=ps[0]?.id||'';
     const list=plans();
     if(!list.some(w=>w.id===S.winnerId))S.winnerId=list[0]?.id||'';
     const ts=tracks(S.winnerId);
@@ -113,6 +115,8 @@
 
   function preview(url,type,name='Media'){
     if(!url)return'<div class="ciw-media-empty"><span>＋</span><small>Sin media</small></div>';
+    if(/^https?:\/\/(?:www\.)?(?:instagram\.com|facebook\.com|fb\.watch)\//i.test(url))
+      return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="display:grid;gap:9px;place-content:center;text-align:center;min-height:145px;padding:16px;color:#e3eaff;text-decoration:none;background:#101927;border:1px solid #314260;border-radius:14px"><span style="font-size:25px">▶</span><b style="font-size:12px">Abrir Reel de referencia</b><small style="font-size:10px;color:#aebbd4">Instagram / Facebook ↗</small></a>`;
     if(String(type||'').startsWith('image/'))return`<img src="${esc(url)}" alt="${esc(name)}" loading="lazy">`;
     if(String(type||'').startsWith('audio/'))return`<div class="ciw-audio-preview">♪<audio controls preload="metadata" src="${esc(url)}"></audio></div>`;
     return`<video controls preload="metadata" src="${esc(url)}"></video>`;
@@ -306,8 +310,8 @@
   },true);
 
   document.addEventListener('creativeos:intelligence-render',()=>{ensureNav();if(S.active)render();});
-  document.addEventListener('DOMContentLoaded',()=>{ensureNav();setTimeout(ensureNav,200);},{once:true});
-  if(document.body){ensureNav();setTimeout(ensureNav,200);}
+  document.addEventListener('DOMContentLoaded',()=>{ensureNav();setTimeout(ensureNav,200);if(deepProduct)setTimeout(activate,350);},{once:true});
+  if(document.body){ensureNav();setTimeout(ensureNav,200);if(deepProduct)setTimeout(activate,350);}
 
-  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.1'};
+  window.CreativeOSWinnerLab={activate,load,getData:()=>S.data,getProductId:()=>S.productId,openTesting,version:'2.2'};
 })();
