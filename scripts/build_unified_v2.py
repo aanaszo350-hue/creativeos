@@ -11,7 +11,7 @@ runpy.run_path('scripts/apply_assets_patch.py', run_name='__main__')
 runpy.run_path('scripts/enhance_testing_workspace.py', run_name='__main__')
 
 s = index.read_text(encoding='utf-8')
-meta = '<meta name="creativeos-build" content="unified-v6-winner-lab" />'
+meta = '<meta name="creativeos-build" content="unified-v8-carpillow-5-splits" />'
 s = s.replace('<meta name="creativeos-build" content="unified-v2" />', meta)
 if meta not in s:
     s = s.replace('<meta name="theme-color" content="#090b10" />', '<meta name="theme-color" content="#090b10" />\n  ' + meta)
@@ -23,7 +23,7 @@ css_links = [
     '<link rel="stylesheet" href="./creativeos-intelligence-v3.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-product-lens.css?v=1" />',
     '<link rel="stylesheet" href="./creativeos-matrix-v2.css?v=1" />',
-    '<link rel="stylesheet" href="./creativeos-winner-splits.css?v=1" />',
+    '<link rel="stylesheet" href="./creativeos-winner-splits.css?v=3" />',
     '<link rel="stylesheet" href="./creativeos-intelligence-crud.css?v=2" />',
 ]
 head_scripts = [
@@ -41,8 +41,8 @@ js_links = [
     '<script src="./creativeos-ux-v4.js?v=1"></script>',
     '<script src="./creativeos-intelligence-core-v3.js?v=1"></script>',
     '<script src="./creativeos-product-lens.js?v=1"></script>',
-    '<script src="./creativeos-winner-splits.js?v=2"></script>',
-    '<script src="./creativeos-winner-splits-fixes.js?v=1"></script>',
+    '<script src="./creativeos-winner-splits.js?v=8"></script>',
+    '<script src="./creativeos-winner-splits-fixes.js?v=5"></script>',
     '<script src="./creativeos-matrix-v2.js?v=2"></script>',
     '<script src="./creativeos-intelligence-crud.js?v=2"></script>',
 ]
@@ -66,11 +66,11 @@ checks = {
     'intelligence hierarchy styles': 'creativeos-intelligence-v3.css?v=1' in s,
     'product lens styles': 'creativeos-product-lens.css?v=1' in s,
     'matrix v2 styles': 'creativeos-matrix-v2.css?v=1' in s,
-    'winner split styles': 'creativeos-winner-splits.css?v=1' in s,
+    'winner split styles': 'creativeos-winner-splits.css?v=3' in s,
     'workflow intelligence core': 'creativeos-intelligence-core-v3.js?v=1' in s,
     'product intelligence lens': 'creativeos-product-lens.js?v=1' in s,
-    'winner split system': 'creativeos-winner-splits.js?v=2' in s,
-    'winner split fixes': 'creativeos-winner-splits-fixes.js?v=1' in s,
+    'winner split system': 'creativeos-winner-splits.js?v=8' in s,
+    'winner split fixes': 'creativeos-winner-splits-fixes.js?v=5' in s,
     'matrix v2 system': 'creativeos-matrix-v2.js?v=2' in s,
     'old split system disabled': 'creativeos-split-tests.js?v=1' not in s,
     'old split continuation disabled': 'creativeos-split-tests-continuation.js?v=1' not in s,
