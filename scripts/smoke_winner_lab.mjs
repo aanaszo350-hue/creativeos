@@ -79,18 +79,18 @@ try{
   // Nail polish Reel: three distinct splits with exact supplied copy, original-video-text pending flag and background concept.
   await waitFor(`!!document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
   await click(`document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===3`,'three visible nail polish split cards');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===4`,'four visible nail polish split cards');
   const nailTestsOK=await evalJS(`(()=>{
     const cards=[...document.querySelectorAll('.ciw-quick-split')];
     const screen=document.querySelector('#ciHost')?.innerText||'';
-    return cards.length===3
+    return cards.length===4
       && screen.includes('¿Cómo que ahora puedes hacerte las uñas con un BOLI?')
       && screen.includes('Split de música · Texto original del Reel')
-      && cards.every(c=>c.querySelector('a')?.href.includes('/reel/DfVAUYNRsZ7/'))
+      && cards.filter(c=>c.querySelector('a')?.href.includes('/reel/DfVAUYNRsZ7/')).length===3 && cards.some(c=>c.querySelector('a')?.href.includes('/reel/DfXRoA3NGGi/'))
       && document.querySelector('.ciw-track-card[data-variable="text_hook"]')
       && document.querySelector('.ciw-track-card[data-variable="audio"]')
-      && document.querySelector('.ciw-track-card[data-variable="background"]')
-      && screen.includes('cambiarlo por una noche de películas');
+      && document.querySelector('.ciw-track-card[data-variable="background"]') && document.querySelector('.ciw-track-card[data-variable="concept"]')
+      && screen.includes('cambiarlo por una noche de películas') && screen.includes('Envíale esto a tu hermana amante de la manicura') && screen.includes('Esmalte semipermanente en formato BOLI') && screen.includes('Para hacerse las uñas en casa sin tantos botes ni pinceles');
   })()`);
   if(!nailTestsOK)throw new Error('Nail polish text/music/background splits not visible with correct Reel');
   await click(`document.querySelector('.ciw-track-card[data-variable="background"]')`,'open nail polish background split');
