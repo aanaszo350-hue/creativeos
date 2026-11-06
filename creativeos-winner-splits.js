@@ -156,7 +156,7 @@
     const pname=product(w.product_id)?.name||String(w.name||'').split('·')[0].trim()||'Producto';
     const val=({t,a})=>{
       const c=a.content||{};
-      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?[c.background_description,c.text_1].filter(Boolean).join(' · '):a.title;
+      return t.variable==='concept'?c.adapted_text||c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?[c.background_description,c.text_1].filter(Boolean).join(' · '):a.title;
     };
     return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · ${esc(pname)}</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
