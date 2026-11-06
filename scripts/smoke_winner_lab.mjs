@@ -35,8 +35,16 @@ try{
   // Exercise Split Tests directly. Matrix UI has its own independent smoke coverage.
   await click(`document.querySelector('#ciwSplitNav')`,'winner split nav');
   await waitFor(`document.querySelector('#ciHost')?.dataset?.ciView==='winner-splits'`,'winner split view');
-  await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
   await waitFor(`!!document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
+  const cleanedTabsOK=await evalJS(`(()=>{
+    const tabs=[...document.querySelectorAll('[data-ciw-product]')];
+    return tabs.length===2
+      && tabs.some(x=>x.dataset.ciwProduct==='carpillow')
+      && tabs.some(x=>x.dataset.ciwProduct==='pintaunas')
+      && !tabs.some(x=>x.dataset.ciwProduct==='strideshield')
+      && !document.querySelector('[data-ciw-winner="winner-carpillow-princess-viral-20261105"]');
+  })()`);
+  if(!cleanedTabsOK)throw new Error('Split Tests cleanup did not hide empty or old products');
   await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
   await waitFor(`document.querySelectorAll('.ciw-quick-split').length===2`,'two visible father daughter and text split tests');
   const fatherTestsOK=await evalJS(`(()=>{
@@ -50,14 +58,6 @@ try{
      && document.querySelector('.ciw-track-card[data-variable="text_hook"]');
   })()`);
   if(!fatherTestsOK)throw new Error('Father daughter and text splits not visible with reference Reel');
-  await click(`document.querySelector('[data-ciw-winner="winner-carpillow-princess-viral-20261105"]')`,'open existing seven car pillow tests');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===7`,'seven visible car pillow split test cards');
-  const carPillowOK=await evalJS(`(()=>{
-    const s=document.querySelector('#ciHost')?.innerText||'';
-    return ['Vídeo 1 · Princesa copiloto','Vídeo 2 · Regalo princesa copiloto','Vídeo 3 · Princesas copiloto difíciles de regalar','Vídeo 4 · Nuevo concepto de referencia','Toda princesa copiloto necesita esto','utiliza el señor mayor','utiliza otra música'].every(t=>s.includes(t))
-    && [...document.querySelectorAll('.ciw-quick-split a')].length===7;
-  })()`);
-  if(!carPillowOK)throw new Error('Car pillow split tests missing text or Reel links');
   // Nail polish Reel: three distinct splits with exact supplied copy, original-video-text pending flag and background concept.
   await waitFor(`!!document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
   await click(`document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
@@ -88,7 +88,6 @@ try{
   })()`);
   if(!backgroundCopyOK)throw new Error('Background split missing user supplied exact texts');
 
-  await click(`document.querySelector('[data-ciw-product="strideshield"]')`,'Stride winner product');
   await waitFor(`!!document.querySelector('[data-ciw-new-winner]')`,'winner lab ready');
   await click(`document.querySelector('[data-ciw-new-winner]')`,'new winner');
   await waitFor(`!!document.querySelector('#ciwWinnerName')`,'winner modal');
