@@ -58,21 +58,36 @@ try{
     && [...document.querySelectorAll('.ciw-quick-split a')].length===7;
   })()`);
   if(!carPillowOK)throw new Error('Car pillow split tests missing text or Reel links');
-  // Nail polish Reel: two distinct splits, exact supplied copy and the original-video-text pending flag.
+  // Nail polish Reel: three distinct splits with exact supplied copy, original-video-text pending flag and background concept.
   await waitFor(`!!document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
   await click(`document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===2`,'two visible nail polish split cards');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===3`,'three visible nail polish split cards');
   const nailTestsOK=await evalJS(`(()=>{
     const cards=[...document.querySelectorAll('.ciw-quick-split')];
     const screen=document.querySelector('#ciHost')?.innerText||'';
-    return cards.length===2
+    return cards.length===3
       && screen.includes('¿Cómo que ahora puedes hacerte las uñas con un BOLI?')
       && screen.includes('Split de música · Texto original del Reel')
       && cards.every(c=>c.querySelector('a')?.href.includes('/reel/DfVAUYNRsZ7/'))
       && document.querySelector('.ciw-track-card[data-variable="text_hook"]')
-      && document.querySelector('.ciw-track-card[data-variable="audio"]');
+      && document.querySelector('.ciw-track-card[data-variable="audio"]')
+      && document.querySelector('.ciw-track-card[data-variable="background"]')
+      && screen.includes('cambiarlo por una noche de películas');
   })()`);
-  if(!nailTestsOK)throw new Error('Nail polish text/music splits not visible with correct Reel');
+  if(!nailTestsOK)throw new Error('Nail polish text/music/background splits not visible with correct Reel');
+  await click(`document.querySelector('.ciw-track-card[data-variable="background"]')`,'open nail polish background split');
+  const backgroundCopyOK=await evalJS(`(()=>{
+    const text=document.querySelector('#ciwTrackDetail')?.innerText||'';
+    return [
+      'cambiarlo por una noche de películas',
+      '¿Cómo que ahora puedes hacerte las uñas con un BOLI?',
+      'Peli, mantita y uñas nuevas sin moverme',
+      'Sin potes y sin salón',
+      'Comenta UÑAS si lo necesitas'
+    ].every(s=>text.includes(s));
+  })()`);
+  if(!backgroundCopyOK)throw new Error('Background split missing user supplied exact texts');
+
   await click(`document.querySelector('[data-ciw-product="strideshield"]')`,'Stride winner product');
   await waitFor(`!!document.querySelector('[data-ciw-new-winner]')`,'winner lab ready');
   await click(`document.querySelector('[data-ciw-new-winner]')`,'new winner');
