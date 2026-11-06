@@ -38,11 +38,11 @@ try{
   await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
   await waitFor(`!!document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
   await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===5`,'five visible car pillow split test cards');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===7`,'seven visible car pillow split test cards');
   const carPillowOK=await evalJS(`(()=>{
     const s=document.querySelector('#ciHost')?.innerText||'';
-    return ['Vídeo 1 · Princesa copiloto','Vídeo 2 · Regalo princesa copiloto','Toda princesa copiloto necesita esto','utiliza el señor mayor','utiliza otra música'].every(t=>s.includes(t))
-    && [...document.querySelectorAll('.ciw-quick-split a')].length===5;
+    return ['Vídeo 1 · Princesa copiloto','Vídeo 2 · Regalo princesa copiloto','Vídeo 3 · Princesas copiloto difíciles de regalar','Vídeo 4 · Nuevo concepto de referencia','Toda princesa copiloto necesita esto','utiliza el señor mayor','utiliza otra música'].every(t=>s.includes(t))
+    && [...document.querySelectorAll('.ciw-quick-split a')].length===7;
   })()`);
   if(!carPillowOK)throw new Error('Car pillow split tests missing text or Reel links');
   await click(`document.querySelector('[data-ciw-product="strideshield"]')`,'Stride winner product');
