@@ -154,7 +154,7 @@
       const c=a.content||{};
       return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':a.title;
     };
-    return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>5 Split Tests · Almohada de coche</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
+    return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · Almohada de coche</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
       return `<article class="ciw-quick-split"><div class="ciw-quick-split-type">${esc(names[t.variable]||varLabel(t.variable))} · ${i+1} de ${all.length}</div><b>${esc(a.title)}</b><p>${esc(val({t,a}))}</p><div class="ciw-quick-split-actions"><button type="button" data-ciw-track="${esc(t.id)}">Ver prueba</button>${/^https?:\/\//.test(href)?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}</div></article>`;
     }).join('')}</div></section>`;
