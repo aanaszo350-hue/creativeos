@@ -154,7 +154,7 @@
     const pname=product(w.product_id)?.name||String(w.name||'').split('·')[0].trim()||'Producto';
     const val=({t,a})=>{
       const c=a.content||{};
-      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?c.background_description||'':a.title;
+      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?[c.background_description,c.text_1].filter(Boolean).join(' · '):a.title;
     };
     return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · ${esc(pname)}</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
@@ -190,12 +190,12 @@
     if(t.variable==='text_hook')return c.text_sequence||c.hook_text||'';
     if(t.variable==='concept')return c.concept_description||c.visual_hook||'';
     if(t.variable==='sales_angle')return c.angle_description||c.promise||'';
-    if(t.variable==='background')return c.background_description||'';
+    if(t.variable==='background')return [c.background_description,c.text_sequence||[c.text_1,c.text_2,c.text_3,c.cta].filter(Boolean).join('\n')].filter(Boolean).join('\n');
     if(t.variable==='audio')return c.audio_name||c.audio_description||'';
     return'';
   }
   function attemptCard(t,a){
-    return`<article class="ciw-attempt ${a.is_best?'best':''} ${a.is_discarded?'discarded':''}"><div class="ciw-attempt-media">${preview(a.media_url,a.media_type,a.media_name)}</div><div class="ciw-attempt-content"><div class="ciw-attempt-top"><span class="ciw-status ${esc(a.production_status)}">${esc(statusLabel(a.production_status))}</span>${a.is_best?'<span class="ciw-star">★ Mejor</span>':''}${a.is_discarded?'<span class="ciw-discarded">Descartado</span>':''}</div><h3>${esc(a.title)}</h3><p>${esc(attemptSummary(t,a)||'Sin detalle añadido.')}</p><div class="ciw-attempt-metrics"><span><b>${fmt(a.views)}</b> views</span><span><b>${fmt(a.sales)}</b> ventas</span><span><b>${fmt(a.likes)}</b> likes</span></div><div class="ciw-attempt-actions"><button data-ciw-edit-attempt="${esc(a.id)}">Editar</button><button data-ciw-data-attempt="${esc(a.id)}">Data</button>${!a.is_best&&!a.is_discarded?`<button class="best" data-ciw-best-attempt="${esc(a.id)}" data-track="${esc(t.id)}">☆ Mejor</button>`:''}${!a.is_discarded?`<button class="danger" data-ciw-discard-attempt="${esc(a.id)}">Descartar</button>`:`<button data-ciw-restore-attempt="${esc(a.id)}">Restaurar</button>`}<button class="danger ghost" data-ciw-delete-attempt="${esc(a.id)}">Eliminar</button></div></div></article>`;
+    return`<article class="ciw-attempt ${a.is_best?'best':''} ${a.is_discarded?'discarded':''}"><div class="ciw-attempt-media">${preview(a.media_url,a.media_type,a.media_name)}</div><div class="ciw-attempt-content"><div class="ciw-attempt-top"><span class="ciw-status ${esc(a.production_status)}">${esc(statusLabel(a.production_status))}</span>${a.is_best?'<span class="ciw-star">★ Mejor</span>':''}${a.is_discarded?'<span class="ciw-discarded">Descartado</span>':''}</div><h3>${esc(a.title)}</h3><p style="white-space:pre-line">${esc(attemptSummary(t,a)||'Sin detalle añadido.')}</p><div class="ciw-attempt-metrics"><span><b>${fmt(a.views)}</b> views</span><span><b>${fmt(a.sales)}</b> ventas</span><span><b>${fmt(a.likes)}</b> likes</span></div><div class="ciw-attempt-actions"><button data-ciw-edit-attempt="${esc(a.id)}">Editar</button><button data-ciw-data-attempt="${esc(a.id)}">Data</button>${!a.is_best&&!a.is_discarded?`<button class="best" data-ciw-best-attempt="${esc(a.id)}" data-track="${esc(t.id)}">☆ Mejor</button>`:''}${!a.is_discarded?`<button class="danger" data-ciw-discard-attempt="${esc(a.id)}">Descartar</button>`:`<button data-ciw-restore-attempt="${esc(a.id)}">Restaurar</button>`}<button class="danger ghost" data-ciw-delete-attempt="${esc(a.id)}">Eliminar</button></div></div></article>`;
   }
 
   function treeView(){
