@@ -19,10 +19,11 @@
   ];
 
   const deepProduct=(new URLSearchParams(window.location.search)).get('split_product')||'';
+  const deepWinner=(new URLSearchParams(window.location.search)).get('split_winner')||'';
   const S={
     active:false,
     productId:deepProduct||sessionStorage.getItem('creativeos_winner_product')||'',
-    winnerId:sessionStorage.getItem('creativeos_winner_id')||'',
+    winnerId:deepWinner||sessionStorage.getItem('creativeos_winner_id')||'',
     trackId:sessionStorage.getItem('creativeos_winner_track')||'',
     mode:sessionStorage.getItem('creativeos_winner_mode')||'panel',
     data:{winnerPlans:[],winnerTracks:[],winnerAttempts:[]},
@@ -147,14 +148,15 @@
   }
   function winnerRail(list,current){return`<div class="ciw-winner-rail">${list.map((w,i)=>`<button class="${w.id===current.id?'active':''}" data-ciw-winner="${esc(w.id)}"><span>Winner ${list.length-i}</span><b>${esc(w.name)}</b><small>${fmt(w.views)} views · ${w.winner_date||'Sin fecha'}</small></button>`).join('')}</div>`;}
   function splitQuickList(w){
-    if(w.id!=='winner-carpillow-princess-viral-20261105')return '';
     const all=tracks(w.id).flatMap(t=>attempts(t.id).filter(a=>!a.is_discarded).map(a=>({t,a})));
-    const names={concept:'Concepto',text_hook:'Texto',avatar:'Avatar',audio:'Música'};
+    if(!all.length)return '';
+    const names={concept:'Concepto',text_hook:'Texto',sales_angle:'Ángulo de venta',background:'Fondo',avatar:'Avatar',audio:'Música'};
+    const pname=product(w.product_id)?.name||String(w.name||'').split('·')[0].trim()||'Producto';
     const val=({t,a})=>{
       const c=a.content||{};
-      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':a.title;
+      return t.variable==='concept'?c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?c.background_description||'':a.title;
     };
-    return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · Almohada de coche</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
+    return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · ${esc(pname)}</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
       return `<article class="ciw-quick-split"><div class="ciw-quick-split-type">${esc(names[t.variable]||varLabel(t.variable))} · ${i+1} de ${all.length}</div><b>${esc(a.title)}</b><p>${esc(val({t,a}))}</p><div class="ciw-quick-split-actions"><button type="button" data-ciw-track="${esc(t.id)}">Ver prueba</button>${/^https?:\/\//.test(href)?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}</div></article>`;
     }).join('')}</div></section>`;
