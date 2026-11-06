@@ -38,6 +38,19 @@ try{
   await waitFor(`!!document.querySelector('[data-ciw-product="strideshield"]')`,'winner product tabs ready');
   await waitFor(`!!document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
   await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===2`,'two visible father daughter and text split tests');
+  const fatherTestsOK=await evalJS(`(()=>{
+    const host=document.querySelector('#ciHost');
+    const cards=[...document.querySelectorAll('.ciw-quick-split')];
+    return host?.innerText?.includes('Mi hija copiloto no volverá a quejarse en los viajes largos 😴👑')
+     && host?.innerText?.includes('“Las princesas copiloto son difíciles de regalar” 🥺💕')
+     && cards.length===2
+     && cards.every(c=>c.querySelector('a')?.href.includes('/reel/DfVdGUipqku/'))
+     && document.querySelector('.ciw-track-card[data-variable="sales_angle"]')
+     && document.querySelector('.ciw-track-card[data-variable="text_hook"]');
+  })()`);
+  if(!fatherTestsOK)throw new Error('Father daughter and text splits not visible with reference Reel');
+  await click(`document.querySelector('[data-ciw-winner="winner-carpillow-princess-viral-20261105"]')`,'open existing seven car pillow tests');
   await waitFor(`document.querySelectorAll('.ciw-quick-split').length===7`,'seven visible car pillow split test cards');
   const carPillowOK=await evalJS(`(()=>{
     const s=document.querySelector('#ciHost')?.innerText||'';
