@@ -62,6 +62,25 @@ try{
   })()`);
   if(!copyVisible)throw new Error('Testeo: German cat hook and payoff not in visible detail card');
   await click(`document.querySelector('#cosTestDetail .cos-test-detail-close')`,'close Testeo detail');
+  // Christmas variant must contain exactly hook + benefit + CTA (no fourth overlay).
+  await click(`[...document.querySelectorAll('.cos-test-product')].find(x=>x.querySelector('.cos-test-product-name')?.innerText==='Cama de perros')?.querySelector('.cos-test-item[data-index="3"]')`,'open Christmas cat Reel');
+  await waitFor(`!!document.querySelector('#cosTestDetail')`,'Christmas Reel detail');
+  const christmasCopyOK=await evalJS(`(()=>{
+    const txt=document.querySelector('#cosTestDetail')?.innerText||'';
+    const copy=[...document.querySelectorAll('#cosTestDetail .cos-test-field')].find(n=>n.querySelector('label')?.innerText==='Adaptación para este producto')?.querySelector('.cos-test-copy')?.innerText||'';
+    return [
+      'Alle Katzen brauchen das zu Weihnachten… 🥹',
+      'Ein warmes, beheiztes Katzenbett ♨️🐈',
+      'Kommentier „KATZE“, wenn du eins willst 🎄🐾'
+    ].every(t=>txt.includes(t))
+    && copy.includes('Hook: ')
+    && copy.includes('Texto 2: ')
+    && copy.includes('CTA: ')
+    && !copy.includes('Texto 3:')
+    && !copy.includes('Ihr neuer Lieblingsplatz zum Schlafen');
+  })()`);
+  if(!christmasCopyOK)throw new Error('Testeo Christmas Reel must show exactly hook, one benefit text and CTA');
+  await click(`document.querySelector('#cosTestDetail .cos-test-detail-close')`,'close Christmas Reel');
   await click(`document.querySelector('[data-ci-route="testing"]')`,'Testing IA');
   await waitFor(`document.querySelectorAll('[data-ci-test-product]').length>=3`,'expected active products');
   const overview=await evalJS(`JSON.stringify(Array.from(document.querySelectorAll('[data-ci-test-product]'),x=>x.innerText))`);
