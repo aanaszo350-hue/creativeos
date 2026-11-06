@@ -67,7 +67,7 @@ try{
   await waitFor(`!!document.querySelector('#cosTestDetail')`,'Christmas Reel detail');
   const christmasCopyOK=await evalJS(`(()=>{
     const txt=document.querySelector('#cosTestDetail')?.innerText||'';
-    const copy=[...document.querySelectorAll('#cosTestDetail .cos-test-field')].find(n=>n.querySelector('label')?.innerText==='Adaptación para este producto')?.querySelector('.cos-test-copy')?.innerText||'';
+    const copy=[...document.querySelectorAll('#cosTestDetail .cos-test-field')].find(n=>n.querySelector('label')?.textContent?.trim()==='Adaptación para este producto')?.querySelector('.cos-test-copy')?.innerText||'';
     return [
       'Alle Katzen brauchen das zu Weihnachten… 🥹',
       'Ein warmes, beheiztes Katzenbett ♨️🐈',
@@ -79,7 +79,10 @@ try{
     && !copy.includes('Texto 3:')
     && !copy.includes('Ihr neuer Lieblingsplatz zum Schlafen');
   })()`);
-  if(!christmasCopyOK)throw new Error('Testeo Christmas Reel must show exactly hook, one benefit text and CTA');
+  if(!christmasCopyOK){
+    const details=await evalJS(`[...document.querySelectorAll('#cosTestDetail .cos-test-field')].map(el=>({label:el.querySelector('label')?.textContent,txt:el.querySelector('.cos-test-copy')?.textContent?.slice(0,400)}))`);
+    throw new Error('Testeo Christmas Reel must show exactly hook, benefit and CTA: '+JSON.stringify(details));
+  }
   await click(`document.querySelector('#cosTestDetail .cos-test-detail-close')`,'close Christmas Reel');
   await click(`document.querySelector('[data-ci-route="testing"]')`,'Testing IA');
   await waitFor(`document.querySelectorAll('[data-ci-test-product]').length>=3`,'expected active products');
