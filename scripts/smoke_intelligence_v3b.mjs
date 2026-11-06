@@ -42,6 +42,26 @@ try{
   await waitFor(`window.CreativeOSIntelligence?.version==='3.0'`,'v3 core loaded');
   await waitFor(`!!window.CreativeOSIntelligenceCRUD`,'CRUD loaded');
 
+  // Verify newly saved pet-bed Reels are visible in the actual Testeo UI, not only in SQL.
+  await waitFor(`!!document.querySelector('[data-cos-testing-route]')`,'Testeo navigation');
+  await click(`document.querySelector('[data-cos-testing-route]')`,'open Testeo content');
+  await waitFor(`document.querySelectorAll('.cos-test-product').length>=2`,'Testeo products loaded');
+  const petBedVisible=await evalJS(`(()=>{
+    const card=[...document.querySelectorAll('.cos-test-product')].find(x=>x.querySelector('.cos-test-product-name')?.innerText==='Cama de perros');
+    if(!card)return false;
+    const rows=[...card.querySelectorAll('.cos-test-item[data-kind="video"]')];
+    const reels=['DfQsbiWPg8r','DfI0mxSOWzW','DfQAeqcRe0B','DfDWQeSylWU'];
+    return rows.length===4 && reels.every((id,i)=>rows[i].querySelector('a[data-cos-open-ref]')?.href.includes('/reel/'+id+'/'));
+  })()`);
+  if(!petBedVisible)throw new Error('Testeo: four pet-bed Reels or references not visibly rendered');
+  await click(`[...document.querySelectorAll('.cos-test-product')].find(x=>x.querySelector('.cos-test-product-name')?.innerText==='Cama de perros')?.querySelector('.cos-test-item[data-index="2"]')`,'open cat night problem Reel');
+  await waitFor(`!!document.querySelector('#cosTestDetail')`,'Testeo Reel detail');
+  const copyVisible=await evalJS(`(()=>{
+    const txt=document.querySelector('#cosTestDetail')?.innerText||'';
+    return ['Deine Katze hält dein Gesicht','Jetzt hat sie ihr eigenes beheiztes Bett','Sie liebt es','Kommentier','DfQAeqcRe0B'].slice(0,4).every(v=>txt.includes(v));
+  })()`);
+  if(!copyVisible)throw new Error('Testeo: German cat hook and payoff not in visible detail card');
+  await click(`document.querySelector('#cosTestDetail .cos-test-detail-close')`,'close Testeo detail');
   await click(`document.querySelector('[data-ci-route="testing"]')`,'Testing IA');
   await waitFor(`document.querySelectorAll('[data-ci-test-product]').length>=3`,'expected active products');
   const overview=await evalJS(`JSON.stringify(Array.from(document.querySelectorAll('[data-ci-test-product]'),x=>x.innerText))`);
