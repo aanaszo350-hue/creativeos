@@ -49,6 +49,7 @@
       return latest(b.id)-latest(a.id);
     });
   };
+  const visibleProducts=()=>products().filter(p=>S.data.winnerPlans.some(w=>w.product_id===p.id));
   const product=id=>products().find(p=>p.id===id)||null;
   const varLabel=k=>VARS.find(v=>v[0]===k)?.[1]||k;
   const varIcon=k=>VARS.find(v=>v[0]===k)?.[2]||'•';
@@ -76,9 +77,10 @@
     window.dispatchEvent(new CustomEvent('creativeos:winner-lab-updated',{detail:S.data}));
   }
   function normalizeSelection(){
-    const ps=products();
+    const ps=visibleProducts();
     if(deepProduct && !S.data.winnerPlans.length)S.productId=deepProduct;
-    else if(!ps.some(p=>p.id===S.productId))S.productId=ps[0]?.id||'';
+    else if(ps.length&&!ps.some(p=>p.id===S.productId))S.productId=ps[0].id;
+    else if(!ps.length&&!products().some(p=>p.id===S.productId))S.productId=products()[0]?.id||'';
     const list=plans();
     if(!list.some(w=>w.id===S.winnerId))S.winnerId=list[0]?.id||'';
     const ts=tracks(S.winnerId);
@@ -123,7 +125,7 @@
     return`<video controls preload="metadata" src="${esc(url)}"></video>`;
   }
 
-  function productTabs(){return`<div class="ciw-product-tabs">${products().map(p=>{const count=S.data.winnerPlans.filter(w=>w.product_id===p.id).length;return`<button class="${p.id===S.productId?'active':''}" data-ciw-product="${esc(p.id)}"><span>${esc(p.name)}</span><small>${count} split tests · Día ${fmt(p.day)}</small></button>`}).join('')}</div>`;}
+  function productTabs(){return`<div class="ciw-product-tabs">${visibleProducts().map(p=>{const count=S.data.winnerPlans.filter(w=>w.product_id===p.id).reduce((sum,w)=>sum+tracks(w.id).reduce((n,t)=>n+attempts(t.id).filter(a=>!a.is_discarded).length,0),0);return`<button class="${p.id===S.productId?'active':''}" data-ciw-product="${esc(p.id)}"><span>${esc(p.name)}</span><small>${count} pruebas · Día ${fmt(p.day)}</small></button>`}).join('')}</div>`;}
   function recentWinnerAccess(){
     const latest=(S.data.winnerPlans||[]).slice().sort((a,b)=>String(b.created_at||b.winner_date||'').localeCompare(String(a.created_at||a.winner_date||''))).slice(0,5);
     if(!latest.length)return '';
