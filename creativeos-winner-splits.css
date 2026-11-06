@@ -28,6 +28,7 @@
 .ciw-quick-split-type{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:#9db8ff}
 .ciw-quick-split b{font-size:12px;color:#f0f5fc}
 .ciw-quick-split p{font-size:12px;line-height:1.5;color:#d8e1f0;white-space:pre-wrap;margin:0;overflow-wrap:anywhere;flex:1}
+.ciw-quick-split-note{display:block;color:#9eafcb;font-size:11px;line-height:1.45;border-left:2px solid #576b90;padding-left:9px;white-space:pre-wrap;overflow-wrap:anywhere}
 .ciw-quick-split-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .ciw-quick-split-actions button,.ciw-quick-split-actions a{border:1px solid #40557a;background:#1a2b45;color:#eaf2ff;border-radius:8px;padding:7px 9px;font-size:10px;text-decoration:none;font-weight:750;cursor:pointer}
 .ciw-quick-split-actions a{background:transparent;border-color:#31425d}
