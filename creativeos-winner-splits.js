@@ -170,7 +170,7 @@
   }
 
   function winnerDetail(w){
-    const ts=tracks(w.id),selected=track(S.trackId)||ts[0]||null;
+    const ts=tracks(w.id),selected=ts.find(t=>t.id===S.trackId)||ts[0]||null;
     const totalSplits=ts.reduce((sum,t)=>sum+attempts(t.id).filter(a=>!a.is_discarded).length,0);
     return`<section class="ciw-winner-card">
       <div class="ciw-winner-head">
