@@ -160,7 +160,7 @@
     };
     return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · ${esc(pname)}</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
-      const note=t.variable==='text_hook'?(a.content?.notes||''):'';
+      const c=a.content||{};const note=[c.change_only&&`QUÉ CAMBIA: ${c.change_only}`,c.keep_unchanged&&`SE MANTIENE: ${c.keep_unchanged}`,c.description&&`DESCRIPCIÓN: ${c.description}`,c.post_caption&&`PARA PUBLICAR: ${c.post_caption}`,t.variable==='text_hook'&&c.notes].filter(Boolean).join('\n');
       return `<article class="ciw-quick-split"><div class="ciw-quick-split-type">${esc(names[t.variable]||varLabel(t.variable))} · ${i+1} de ${all.length}</div><b>${esc(a.title)}</b><p>${esc(val({t,a}))}</p>${note?`<small class="ciw-quick-split-note">${esc(note)}</small>`:''}<div class="ciw-quick-split-actions"><button type="button" data-ciw-track="${esc(t.id)}">Ver prueba</button>${/^https?:\/\//.test(href)?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}</div></article>`;
     }).join('')}</div></section>`;
   }
@@ -190,8 +190,8 @@
 
   function attemptSummary(t,a){
     const c=a.content||{};
-    if(t.variable==='avatar')return [c.avatar_description||c.avatar_name,c.text_1&&`Texto 1: ${c.text_1}`,c.cta&&`CTA: ${c.cta}`].filter(Boolean).join('\n');
-    if(t.variable==='text_hook')return [c.text_sequence||c.hook_text||c.text_1,c.notes].filter(Boolean).join('\n');
+    if(t.variable==='avatar')return [c.avatar_description||c.avatar_name,c.text_1&&`Texto 1: ${c.text_1}`,c.text_2&&`Texto 2: ${c.text_2}`,c.text_3&&`Texto 3: ${c.text_3}`,c.text_4&&`Texto 4: ${c.text_4}`,c.cta&&`CTA: ${c.cta}`,c.post_caption&&`Descripción para publicar: ${c.post_caption}`].filter(Boolean).join('\n');
+    if(t.variable==='text_hook')return [c.text_sequence||[c.text_1,c.text_2,c.text_3,c.text_4,c.cta].filter(Boolean).join('\n'),c.description,c.post_caption&&`Descripción para publicar: ${c.post_caption}`,c.notes].filter(Boolean).join('\n');
     if(t.variable==='concept')return c.concept_description||c.visual_hook||'';
     if(t.variable==='sales_angle')return c.angle_description||c.promise||'';
     if(t.variable==='background')return [c.background_description,c.text_sequence||[c.text_1,c.text_2,c.text_3,c.cta].filter(Boolean).join('\n')].filter(Boolean).join('\n');
