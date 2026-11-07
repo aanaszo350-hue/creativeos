@@ -3,6 +3,7 @@
   if (window.CreativeOSSplitSheetGroups?.version === '1.3') return;
 
   const GROUPS = {
+    guide: { label: 'Guía del split · Qué hacer', icon: '✓', color: '#56d6c3', soft: 'rgba(86,214,195,.07)' },
     summary: { label: 'Resumen del test', icon: '◇', color: '#94a3b8', soft: 'rgba(148,163,184,.07)' },
     angle: { label: 'Ángulo / Contexto', icon: '↗', color: '#22d3ee', soft: 'rgba(34,211,238,.07)' },
     copy: { label: 'Texto / Copy', icon: 'T', color: '#f59e0b', soft: 'rgba(245,158,11,.07)' },
@@ -29,6 +30,13 @@
       .cos5-group .cos4-card{background:rgba(7,12,18,.40);border-color:rgba(255,255,255,.055)}
       .cos5-group .cos4-card.accent{border-color:color-mix(in srgb,var(--g) 36%,transparent)!important;background:color-mix(in srgb,var(--g) 8%,#0d141d)!important}
       .cos5-group[data-group="copy"] .cos4-card small{color:#d7a43c}.cos5-group[data-group="visual"] .cos4-card small{color:#aa93e7}.cos5-group[data-group="strategy"] .cos4-card small{color:#67cda8}.cos5-group[data-group="refs"] .cos4-card p{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#c7ccff}.cos5-group[data-group="angle"] .cos4-card small{color:#56cad9}.cos5-group[data-group="avatar"] .cos4-card small{color:#e28bbd}.cos5-group[data-group="context"] .cos4-card small{color:#7eb3ee}
+      .cos5-group[data-group="guide"]{border-color:rgba(86,214,195,.26);background:linear-gradient(135deg,rgba(86,214,195,.095),rgba(13,20,29,.96) 50%)}
+      .cos5-group[data-group="guide"] .cos4-card{background:rgba(6,20,22,.55)}
+      .cos5-group[data-group="guide"] .cos4-card small{color:#8fe6dc;font-size:10px}
+      .cos5-group-grid .cos4-card{padding:14px 15px;border-radius:12px}
+      .cos5-group-grid .cos4-card small{font-size:10px;letter-spacing:.06em}
+      .cos5-group-grid .cos4-card p{font-size:13px;line-height:1.65;color:#e4edf8;overflow-wrap:anywhere}
+      .cos5-group-title h3{font-size:14px}
       .cos5-extra-badge{display:inline-flex;margin:8px 0 0;padding:5px 8px;border-radius:999px;border:1px solid rgba(167,139,250,.28);background:rgba(167,139,250,.10);color:#cbbcff;font-size:7px;font-weight:900;letter-spacing:.08em}
       @media(max-width:1100px){.cos5-group-grid .cos4-card{grid-column:span 6}.cos5-group-grid .cos4-card.full{grid-column:1/-1}}
       @media(max-width:720px){.cos5-group-grid{grid-template-columns:1fr;padding:9px}.cos5-group-grid .cos4-card,.cos5-group-grid .cos4-card.wide,.cos5-group-grid .cos4-card.full{grid-column:1/-1}.cos5-group-head{padding:10px 11px}}
@@ -58,6 +66,7 @@
   function category(label,type){
     const l=label.toLowerCase();
     if(l.startsWith('pinterest'))return 'refs';
+    if(['qué cambia','qué se mantiene','descripción del split','descripción para publicar','música de referencia'].includes(l))return 'guide';
     if(['hipótesis','aprendizaje','nota','cambio psicológico','pregunta estratégica'].some(x=>l.includes(x)))return 'strategy';
     if(/^texto [1-4]$/.test(l)||l==='cta'||l==='hook de texto'||l==='hook variante')return 'copy';
     if(l==='hook control'||l.includes('tipo de test'))return 'summary';
@@ -85,6 +94,32 @@
     values.forEach(([l,v],i)=>grid.appendChild(card(l,v,i===0?'wide accent':'wide')));
   }
 
+
+  // Ficha legible para cualquier intento: cambios, elementos fijos y descripción.
+  function addProductionGuide(grid,type){
+    const {a,c}=current();
+    if(!a)return;
+    const changeLabels={
+      text_hook:'Textos en pantalla',
+      avatar:'Persona / avatar',
+      concept:'Concepto y hook visual',
+      background:'Fondo y ambientación',
+      audio:'Música / sonido',
+      sales_angle:'Ángulo de venta'
+    };
+    const changed=c.change_only||changeLabels[type]||'Variable de esta prueba';
+    const keep=c.keep_unchanged||'Todo lo que no se haya indicado modificar en la referencia original.';
+    const description=c.description||c.instruction||c.concept_description||c.avatar_description||c.background_description||c.audio_description||c.text_sequence||'Aplicar esta variante tomando como base el vídeo de referencia.';
+    const entries=[
+      ['Qué cambia',changed,'wide accent'],
+      ['Qué se mantiene',keep,'wide'],
+      ['Descripción del split',description,'full']
+    ];
+    if(c.post_caption)entries.push(['Descripción para publicar',c.post_caption,'full accent']);
+    if(c.audio_name)entries.push(['Música de referencia',c.audio_name,'wide']);
+    for(const [label,value,cls] of entries)grid.appendChild(card(label,value,cls));
+  }
+
   function decorateReplication(root,grid){
     const {c}=current(); if(c?.mode!=='control_replication')return;
     const h=root.querySelector('.cos4-head h2'); if(h)h.textContent='Extra · Replicar control';
@@ -102,13 +137,13 @@
 
   function groupSheet(root){
     const sheet=root.querySelector('[data-cos4-view="sheet"]'); const grid=sheet?.querySelector(':scope > .cos4-grid'); if(!grid||grid.dataset.cos5Grouped==='1')return;
-    injectCss(); addNumberedCopy(grid); decorateReplication(root,grid);
+    injectCss(); addNumberedCopy(grid); addProductionGuide(grid,splitType(root)); decorateReplication(root,grid);
     const type=splitType(root); let cards=[...grid.children].filter(el=>el.classList.contains('cos4-card')); if(!cards.length)return;
     for(const c of [...cards]){if(txt(c)!=='idea / contenido')continue;const v=body(c);if(v&&cards.some(o=>o!==c&&body(o)===v)){c.remove();cards=cards.filter(x=>x!==c)}}
     const buckets=new Map();cards.forEach(c=>{const k=category(txt(c),type);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(c)});
     const stack=document.createElement('div');stack.className='cos5-sheet-stack';
     const addGroup=(key,items)=>{if(!items?.length)return;const g=GROUPS[key]||GROUPS.summary;const sec=document.createElement('section');sec.className='cos5-group';sec.dataset.group=key;sec.style.setProperty('--g',g.color);sec.style.setProperty('--gs',g.soft);sec.innerHTML=`<div class="cos5-group-head"><div class="cos5-group-icon">${g.icon}</div><div class="cos5-group-title"><small>BLOQUE</small><h3>${g.label}</h3></div></div><div class="cos5-group-grid"></div>`;items.forEach(c=>sec.querySelector('.cos5-group-grid').appendChild(c));stack.appendChild(sec)};
-    for(const k of groupOrder(type)){addGroup(k,buckets.get(k));buckets.delete(k)} for(const [k,v] of buckets)addGroup(k,v);
+    for(const k of ['guide',...groupOrder(type)]){addGroup(k,buckets.get(k));buckets.delete(k)} for(const [k,v] of buckets)addGroup(k,v);
     grid.dataset.cos5Grouped='1';grid.replaceWith(stack);
   }
 
