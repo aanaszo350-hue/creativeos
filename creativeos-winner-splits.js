@@ -167,12 +167,13 @@
 
   function winnerDetail(w){
     const ts=tracks(w.id),selected=track(S.trackId)||ts[0]||null;
+    const totalSplits=ts.reduce((sum,t)=>sum+attempts(t.id).filter(a=>!a.is_discarded).length,0);
     return`<section class="ciw-winner-card">
       <div class="ciw-winner-head">
         <div class="ciw-winner-media">${preview(w.video_url,w.video_name?.match(/\.(jpg|jpeg|png|webp)$/i)?'image/*':'video/*',w.video_name)}</div>
-        <div class="ciw-winner-info"><span class="ciw-kicker">Vídeo winner</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
+        <div class="ciw-winner-info"><span class="ciw-kicker">Reel de referencia principal</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
       </div>
-      <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>Seis splits del mismo vídeo</h2><p>Cada bloque guarda sus propios intentos, estado, media, data y mejor variante.</p></div></div>
+      <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>${totalSplits} Split Tests de esta ronda</h2><p>Cada prueba conserva su Reel de referencia y las instrucciones correspondientes. Debajo puedes gestionar las variantes por tipo.</p></div></div>
       ${splitQuickList(w)}<div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
       ${selected?trackDetail(selected):''}
     </section>`;
