@@ -82,7 +82,17 @@
     else if(ps.length&&!ps.some(p=>p.id===S.productId))S.productId=ps[0].id;
     else if(!ps.length&&!products().some(p=>p.id===S.productId))S.productId=products()[0]?.id||'';
     const list=plans();
-    if(!list.some(w=>w.id===S.winnerId))S.winnerId=list[0]?.id||'';
+    // Abrir una ronda nueva al llegar, sin impedir que el usuario consulte el historial.
+    const latest=list[0]||null;
+    const latestKey='creativeos_seen_latest_round_'+S.productId;
+    const lastSeen=sessionStorage.getItem(latestKey);
+    if(latest && lastSeen!==latest.id){
+      S.winnerId=latest.id;
+      S.trackId='';
+      sessionStorage.setItem(latestKey,latest.id);
+    }else if(!list.some(w=>w.id===S.winnerId)){
+      S.winnerId=latest?.id||'';
+    }
     const ts=tracks(S.winnerId);
     if(!ts.some(t=>t.id===S.trackId))S.trackId=ts[0]?.id||'';
     sessionStorage.setItem('creativeos_winner_product',S.productId);
