@@ -156,7 +156,7 @@
     const pname=product(w.product_id)?.name||String(w.name||'').split('·')[0].trim()||'Producto';
     const val=({t,a})=>{
       const c=a.content||{};
-      return t.variable==='concept'?c.adapted_text||c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?c.avatar_description||'':t.variable==='audio'?c.audio_description||c.audio_name||'':t.variable==='background'?[c.background_description,c.text_1].filter(Boolean).join(' · '):a.title;
+      return t.variable==='concept'?c.adapted_text||c.text_1||c.concept_description||'':t.variable==='text_hook'?c.hook_text||c.text_sequence||c.text_1||'':t.variable==='sales_angle'?c.text_1||c.angle_description||'':t.variable==='avatar'?[c.avatar_description||c.avatar_name,c.text_1&&`Texto 1: ${c.text_1}`,c.cta&&`CTA: ${c.cta}`].filter(Boolean).join('\n'):t.variable==='audio'?[c.audio_description||c.audio_name,c.text_1&&`Texto 1: ${c.text_1}`,c.cta&&`CTA: ${c.cta}`].filter(Boolean).join('\n'):t.variable==='background'?[c.background_description,c.text_1].filter(Boolean).join(' · '):a.title;
     };
     return `<section class="ciw-quick-splits"><div class="ciw-quick-splits-header"><h3>${all.length} Split Tests · ${esc(pname)}</h3><span>${all.length} pruebas registradas</span></div><div class="ciw-quick-splits-grid">${all.map(({t,a},i)=>{
       const href=a.content?.reference_url||w.video_url||'';
@@ -190,12 +190,12 @@
 
   function attemptSummary(t,a){
     const c=a.content||{};
-    if(t.variable==='avatar')return c.avatar_description||c.avatar_name||'';
+    if(t.variable==='avatar')return [c.avatar_description||c.avatar_name,c.text_1&&`Texto 1: ${c.text_1}`,c.cta&&`CTA: ${c.cta}`].filter(Boolean).join('\n');
     if(t.variable==='text_hook')return [c.text_sequence||c.hook_text||c.text_1,c.notes].filter(Boolean).join('\n');
     if(t.variable==='concept')return c.concept_description||c.visual_hook||'';
     if(t.variable==='sales_angle')return c.angle_description||c.promise||'';
     if(t.variable==='background')return [c.background_description,c.text_sequence||[c.text_1,c.text_2,c.text_3,c.cta].filter(Boolean).join('\n')].filter(Boolean).join('\n');
-    if(t.variable==='audio')return c.audio_description||c.audio_name||'';
+    if(t.variable==='audio')return [c.audio_description||c.audio_name,c.text_1&&`Texto 1: ${c.text_1}`,c.cta&&`CTA: ${c.cta}`].filter(Boolean).join('\n');
     return'';
   }
   function attemptCard(t,a){
