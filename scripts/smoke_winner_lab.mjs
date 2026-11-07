@@ -46,40 +46,46 @@ try{
   })()`);
   if(!cleanedTabsOK)throw new Error('Split Tests cleanup did not hide empty or old products');
   await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===4`,'four current car-pillow Split Tests only');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===2`,'two fresh car-pillow splits and no old rounds');
   const carPillowOK=await evalJS(`(()=>{
     const cards=[...document.querySelectorAll('.ciw-quick-split')];
     const screen=document.querySelector('#ciHost')?.innerText||'';
-    const expected=[
-      ['Split de texto · No dejes que lo vea','DfFUKDmuPT6'],
-      ['Split de texto · POV almohada perfecta','DfP1ae7Oj4x'],
-      ['Split de música · I Want for Christmas','DfIenWKJ7fb'],
-      ['Split de avatar · Señor que funciona','DfIenWKJ7fb']
-    ];
-    return cards.length===4
-      && expected.every(([title,reel],i)=>cards[i].querySelector('b')?.innerText===title && cards[i].querySelector('a')?.href.includes('/reel/'+reel+'/'))
-      && screen.includes('Almohada de coche · 4 Split Tests nuevos · 07/11')
-      && screen.includes('4 Split Tests de esta ronda')
-      && screen.includes('No dejes que una princesa copiloto vea esto 🤭👑')
-      && screen.includes('POV: Encuentras la almohada perfecta para tu princesa copiloto 🤭')
-      && screen.includes('cambia el coche por el coche rojo, mantén la ropa blanca')
-      && screen.includes('ropa gris') && screen.includes('I Want for Christmas')
-      && screen.includes('cambiar avatar por señor, mantener coche rojo, cambiar música a música viral y cambiar texto a texto viral')
-      && !screen.includes('Mi hija copiloto no volverá a quejarse')
-      && !screen.includes('Las princesas copiloto son difíciles de regalar')
-      && !document.querySelector('.ciw-track-card[data-variable="sales_angle"]')
-      && ['text_hook','audio','avatar'].every(type=>document.querySelector('.ciw-track-card[data-variable="'+type+'"]'))
-      && document.querySelectorAll('.ciw-track-card').length===3
-      && document.querySelector('.ciw-reference-link')?.href.includes('/reel/DfFUKDmuPT6/');
+    const hook='Mi hija copiloto no volverá a quejarse en los viajes largos 😴👑';
+    const cta='Comenta «ALMOHADA» si necesitas el tuyo ☁️❤️';
+    const expected=['Split de música · Música viral','Split de avatar · Padre mediterráneo + hija morena'];
+    return cards.length===2
+      && cards.every((card,i)=>card.querySelector('b')?.innerText===expected[i]
+        && card.querySelector('a')?.href.includes('/reel/DfaExBmM3xD/')
+        && card.innerText.includes(hook)
+        && card.innerText.includes(cta))
+      && screen.includes('Almohada de coche · Música + Avatar · Reel DfaExBmM3xD · 07/11')
+      && screen.includes('2 Split Tests de esta ronda')
+      && screen.includes('Cambiar música por música viral que está funcionando.')
+      && screen.includes('Poner hombre más mediterráneo, español, y niña morena, más española.')
+      && !screen.includes('Split de texto · POV almohada perfecta')
+      && !screen.includes('Split de texto · No dejes que lo vea')
+      && ['audio','avatar'].every(type=>document.querySelector('.ciw-track-card[data-variable="'+type+'"]'))
+      && !document.querySelector('.ciw-track-card[data-variable="text_hook"]')
+      && document.querySelectorAll('.ciw-track-card').length===2
+      && document.querySelector('.ciw-reference-link')?.href.includes('/reel/DfaExBmM3xD/');
   })()`);
-  if(!carPillowOK)throw new Error('Car pillow four Split Tests are mixed with old attempts or incorrect Reels');
-  await click(`document.querySelector('.ciw-track-card[data-variable="text_hook"]')`,'open current car pillow text splits');
-  const carCopyOK=await evalJS(`(()=>{
+  if(!carPillowOK)throw new Error('Car pillow current 2 splits must show only latest Reel, hook, CTA and correct actions');
+  await click(`document.querySelector('.ciw-track-card[data-variable="avatar"]')`,'open new avatar split');
+  const avatarDetailsOK=await evalJS(`(()=>{
     const detail=document.querySelector('#ciwTrackDetail')?.innerText||'';
-    return ['No dejes que una princesa copiloto vea esto 🤭👑','POV: Encuentras la almohada perfecta para tu princesa copiloto 🤭','cambia el coche por el coche rojo, mantén la ropa blanca'].every(x=>detail.includes(x))
-      && !detail.includes('Mi hija copiloto');
+    return ['Poner hombre más mediterráneo, español, y niña morena, más española.',
+      'Mi hija copiloto no volverá a quejarse en los viajes largos 😴👑',
+      'Comenta «ALMOHADA» si necesitas el tuyo ☁️❤️'].every(x=>detail.includes(x));
   })()`);
-  if(!carCopyOK)throw new Error('Current car pillow text splits omit required notes or contain old copy');
+  if(!avatarDetailsOK)throw new Error('New car-pillow avatar split missing exact hook, CTA or change note');
+  await click(`document.querySelector('.ciw-track-card[data-variable="audio"]')`,'open new music split');
+  const musicDetailsOK=await evalJS(`(()=>{
+    const detail=document.querySelector('#ciwTrackDetail')?.innerText||'';
+    return ['Cambiar música por música viral que está funcionando.',
+      'Mi hija copiloto no volverá a quejarse en los viajes largos 😴👑',
+      'Comenta «ALMOHADA» si necesitas el tuyo ☁️❤️'].every(x=>detail.includes(x));
+  })()`);
+  if(!musicDetailsOK)throw new Error('New car-pillow music split missing exact hook, CTA or change note');
   // Nail polish Reel: three distinct splits with exact supplied copy, original-video-text pending flag and background concept.
   await waitFor(`!!document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
   await click(`document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
