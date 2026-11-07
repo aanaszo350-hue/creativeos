@@ -94,7 +94,7 @@
   function loadSplitGroups(){
     if(window.CreativeOSSplitSheetGroups?.version==='1.3'){loadAttemptSelector();return;}
     const old=document.querySelector('script[data-cos-split-groups]');old?.remove();
-    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=4';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
+    const script=document.createElement('script');script.src='./creativeos-split-sheet-groups.js?v=5';script.dataset.cosSplitGroups='1';script.defer=true;script.addEventListener('load',loadAttemptSelector,{once:true});document.head.appendChild(script);
   }
   function loadProductRadar(){
     if(window.CreativeOSProductRadar?.version==='1.0')return;
