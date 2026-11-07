@@ -292,7 +292,7 @@
     const value=id=>document.getElementById(id)?.value.trim()||'';
     const copy=['text_hook','avatar'].includes(t.variable)?
       Object.fromEntries(['text_1','text_2','text_3','text_4','cta'].map(k=>[k,value('ciw-'+k)])):{};
-    const sequence=['text_1','text_2','text_3','text_4'].map((k,i)=>copy[k]?`Texto ${i+1}: ${copy[k]}`:'').filter(Boolean).join('\\n');
+    const sequence=['text_1','text_2','text_3','text_4'].map((k,i)=>copy[k]?`Texto ${i+1}: ${copy[k]}`:'').filter(Boolean).join('\n');
     const meta={
       description:value('ciwSplitDescription'),
       keep_unchanged:value('ciwSplitKeep'),
