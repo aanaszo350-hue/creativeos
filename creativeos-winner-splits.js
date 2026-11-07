@@ -139,7 +139,7 @@
     const p=product(S.productId);
     if(S.loading&&!S.data.winnerPlans.length){host.innerHTML='<div class="ci-loading">Cargando Split Tests…</div>';return;}
     const body=S.mode==='tree'?treeView():S.mode==='history'?historyView():panelView();
-    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Un vídeo ganador abre seis direcciones de optimización: concepto, texto, ángulo, fondo, música y avatar. Cada dirección puede tener todos los intentos que necesites.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}${recentWinnerAccess()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} winners</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
+    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Cada ronda agrupa únicamente los splits de esa sesión o fecha. Las rondas anteriores se conservan separadas como historial, sin mezclarse con la ronda actual.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}${recentWinnerAccess()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} rondas</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
   }
 
   function panelView(){
@@ -148,7 +148,11 @@
     const w=winner(S.winnerId)||list[0];
     return`${winnerRail(list,w)}${winnerDetail(w)}`;
   }
-  function winnerRail(list,current){return`<div class="ciw-winner-rail">${list.map((w,i)=>`<button class="${w.id===current.id?'active':''}" data-ciw-winner="${esc(w.id)}"><span>Winner ${list.length-i}</span><b>${esc(w.name)}</b><small>${fmt(w.views)} views · ${w.winner_date||'Sin fecha'}</small></button>`).join('')}</div>`;}
+  function winnerRail(list,current){return`<div class="ciw-winner-rail">${list.map((w,i)=>{
+     const count=tracks(w.id).reduce((n,t)=>n+attempts(t.id).filter(a=>!a.is_discarded).length,0);
+     const d=w.winner_date?String(w.winner_date).split('-').reverse().join('/'):'Sin fecha';
+     return`<button class="${w.id===current.id?'active':''}" data-ciw-winner="${esc(w.id)}" title="Ver solo los splits de esta ronda"><span>${i===0?'Ronda más reciente':'Ronda anterior'} · ${esc(d)}</span><b>${esc(w.name)}</b><small>${count} splits · ${i===0?'Actual':'Historial separado'}</small></button>`;
+   }).join('')}</div>`;}
   function splitQuickList(w){
     const all=tracks(w.id).flatMap(t=>attempts(t.id).filter(a=>!a.is_discarded).map(a=>({t,a})));
     if(!all.length)return '';
@@ -171,9 +175,9 @@
     return`<section class="ciw-winner-card">
       <div class="ciw-winner-head">
         <div class="ciw-winner-media">${preview(w.video_url,w.video_name?.match(/\.(jpg|jpeg|png|webp)$/i)?'image/*':'video/*',w.video_name)}</div>
-        <div class="ciw-winner-info"><span class="ciw-kicker">Reel de referencia principal</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
+        <div class="ciw-winner-info"><span class="ciw-kicker">Ronda independiente · Cada prueba conserva su Reel propio</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
       </div>
-      <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>${totalSplits} Split Tests de esta ronda</h2><p>Cada prueba conserva su Reel de referencia y las instrucciones correspondientes. Debajo puedes gestionar las variantes por tipo.</p></div></div>
+      <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>${totalSplits} Split Tests de esta ronda</h2><p>Solo aparecen las pruebas de esta ronda. Las anteriores están en su propia pestaña de fecha. Cada intento conserva enlace, texto y descripción.</p></div></div>
       ${splitQuickList(w)}<div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
       ${selected?trackDetail(selected):''}
     </section>`;
