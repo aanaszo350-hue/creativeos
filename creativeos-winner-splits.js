@@ -149,7 +149,7 @@
     const p=product(S.productId);
     if(S.loading&&!S.data.winnerPlans.length){host.innerHTML='<div class="ci-loading">Cargando Split Tests…</div>';return;}
     const body=S.mode==='tree'?treeView():S.mode==='history'?historyView():panelView();
-    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Cada ronda agrupa únicamente los splits de esa sesión o fecha. Las rondas anteriores se conservan separadas como historial, sin mezclarse con la ronda actual.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}${recentWinnerAccess()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} rondas</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
+    host.innerHTML=`<div class="ciw-hero"><div><div class="ci-eyebrow">CreativeOS · Winner Lab</div><h1>Split Tests</h1><p>Cada ronda agrupa únicamente los splits de esa sesión o fecha. Las rondas anteriores se conservan separadas como historial, sin mezclarse con la ronda actual.</p></div><div class="ci-actions"><button class="ci-btn primary" data-ciw-new-winner>+ Vídeo winner</button><button class="ci-btn" data-ciw-refresh>↻ Actualizar</button></div></div>${productTabs()}<div class="ciw-context"><span>Producto</span><b>${esc(p?.name||'—')}</b><i></i><span>${plans().length} rondas</span><i></i><span>${plans().filter(x=>x.status==='active').length} activos</span>${modeTabs()}</div>${body}`;
   }
 
   function panelView(){
@@ -179,20 +179,89 @@
     }).join('')}</div></section>`;
   }
 
-  function winnerDetail(w){
-    const ts=tracks(w.id),selected=ts.find(t=>t.id===S.trackId)||ts[0]||null;
-    const totalSplits=ts.reduce((sum,t)=>sum+attempts(t.id).filter(a=>!a.is_discarded).length,0);
-    return`<section class="ciw-winner-card">
-      <div class="ciw-winner-head">
-        <div class="ciw-winner-media">${preview(w.video_url,w.video_name?.match(/\.(jpg|jpeg|png|webp)$/i)?'image/*':'video/*',w.video_name)}</div>
-        <div class="ciw-winner-info"><span class="ciw-kicker">Ronda independiente · Cada prueba conserva su Reel propio</span><h2>${esc(w.name)}</h2><div class="ciw-winner-metrics"><span><b>${fmt(w.views)}</b> views</span><span><b>${fmt(w.sales)}</b> ventas</span><span><b>${esc(w.winner_date||'—')}</b> fecha</span></div><p>${esc(w.notes||'Sin notas todavía.')}</p>${/^https?:\/\//.test(String(w.video_url||''))?`<a class="ciw-reference-link" href="${esc(w.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;margin-bottom:12px;color:#b9c8ff;font-size:12px;font-weight:750;text-decoration:underline">Abrir Reel de referencia ↗</a>`:''}<div class="ciw-inline-actions"><button data-ciw-edit-winner="${esc(w.id)}">Editar winner</button><button data-ciw-next-winner="${esc(w.id)}">Crear Winner V2</button><button class="danger" data-ciw-delete-winner="${esc(w.id)}">Eliminar</button></div></div>
+  function splitCard(t,a,i,total,w){
+  const c=a.content||{};
+  const kind={concept:'Concepto',text_hook:'Texto',sales_angle:'Ángulo',background:'Fondo',avatar:'Avatar',audio:'Música'}[t.variable]||varLabel(t.variable);
+  const copy=[1,2,3,4].map(n=>({label:`Texto ${n}`,value:c[`text_${n}`]})).filter(x=>String(x.value||'').trim());
+  let captionCopy=c.text_sequence||c.adapted_text||c.hook_text||c.original_text||'';
+  const cta=String(c.cta||'').trim();
+  const ctaMatched=copy.some(x=>String(x.value).trim()===cta);
+  const rows=copy.length?copy.map(x=>({label:x.label+(cta&&String(x.value).trim()===cta?' · CTA':''),value:x.value,isCTA:!!cta&&String(x.value).trim()===cta})):[];
+  if(cta&&!ctaMatched)rows.push({label:'CTA',value:cta,isCTA:true});
+  const textContent=rows.length
+    ?rows.map(x=>`<div class="ciw-video-line ${x.isCTA?'ciw-video-line-cta':''}"><span>${esc(x.label)}</span><p>${esc(x.value)}</p></div>`).join('')
+    :(captionCopy?`<div class="ciw-video-line"><span>Copy</span><p>${esc(captionCopy)}</p></div>`:'<p class="ciw-video-copy-empty">Textos pendientes de añadir o comprobar en el Reel.</p>');
+  const details=[1,2,3,4,5].map(n=>c[`clip_${n}`]).filter(v=>String(v||'').trim());
+  const desc=c.description||c.concept_description||c.avatar_description||c.background_description||c.angle_description||c.audio_description||c.instruction||'';
+  const change=c.change_only||{
+    concept:'Probar este concepto visual',
+    text_hook:'Probar una versión de texto distinta',
+    avatar:'Cambiar la persona del vídeo',
+    background:'Modificar el escenario',
+    audio:'Probar otra música',
+    sales_angle:'Probar otro ángulo de venta'
+  }[t.variable]||'Probar esta variante';
+  const date=w.winner_date?String(w.winner_date).split('-').reverse().join('/'):'';
+  const url=c.reference_url||w.video_url||'';
+  const safeUrl=/^https?:\/\/[^\s]+$/i.test(url);
+  const status=statusLabel(a.production_status);
+  const extra=!!(c.keep_unchanged||c.instruction||c.avatar_description||c.dialogue||c.audio_description||c.background_description||details.length||a.notes);
+  const extraBlock=extra?`<details class="ciw-video-extra">
+    <summary>Ver instrucciones${details.length?' y '+details.length+' escenas':''}<span aria-hidden="true">⌄</span></summary>
+    <div class="ciw-video-extra-body">
+      ${c.keep_unchanged?`<div><b>Se mantiene</b><p>${esc(c.keep_unchanged)}</p></div>`:''}
+      ${c.dialogue?`<div><b>Frase hablada</b><p>${esc(c.dialogue)}</p></div>`:''}
+      ${c.avatar_description?`<div><b>Avatar</b><p>${esc(c.avatar_description)}</p></div>`:''}
+      ${c.audio_description?`<div><b>Audio</b><p>${esc(c.audio_description)}</p></div>`:''}
+      ${c.background_description?`<div><b>Fondo</b><p>${esc(c.background_description)}</p></div>`:''}
+      ${details.length?`<div class="ciw-video-scenes"><b>Escenas del vídeo</b>${details.map((d,j)=>`<div class="ciw-video-scene"><span>${j+1}</span><p>${esc(d)}</p></div>`).join('')}</div>`:''}
+      ${c.instruction&&c.instruction!==desc?`<div><b>Instrucciones</b><p>${esc(c.instruction)}</p></div>`:''}
+      ${a.notes?`<div><b>Notas</b><p>${esc(a.notes)}</p></div>`:''}
+    </div>
+  </details>`:'';
+  return `<article class="ciw-video-card" data-kind="${esc(t.variable)}" aria-label="Prueba ${i+1} de ${total}: ${esc(a.title)}">
+    <div class="ciw-video-card-head">
+      <div class="ciw-video-index">${String(i+1).padStart(2,'0')}</div>
+      <div class="ciw-video-identity">
+        <div class="ciw-video-overline"><span>${esc(kind)}</span><span>Prueba ${i+1} de ${total}</span>${date?`<span>${esc(date)}</span>`:''}</div>
+        <h3>${esc(a.title)}</h3>
       </div>
-      <div class="ciw-section-head"><div><span>Plan de optimización</span><h2>${totalSplits} Split Tests de esta ronda</h2><p>Solo aparecen las pruebas de esta ronda. Las anteriores están en su propia pestaña de fecha. Cada intento conserva enlace, texto y descripción.</p></div></div>
-      ${splitQuickList(w)}<div class="ciw-track-grid">${ts.map(trackCard).join('')}</div>
-      ${selected?trackDetail(selected):''}
-    </section>`;
-  }
-  function trackCard(t){
+      <span class="ciw-video-status">${esc(status)}</span>
+    </div>
+    <div class="ciw-video-change"><span>LO QUE VAS A PROBAR</span><p>${esc(change)}</p></div>
+    <div class="ciw-video-copy">
+      <div class="ciw-video-section-title"><h4>Textos del vídeo</h4><span>${rows.length?rows.length+' textos':'Referencia original'}</span></div>
+      <div class="ciw-video-lines">${textContent}</div>
+    </div>
+    ${desc?`<div class="ciw-video-description"><span>DESCRIPCIÓN DEL SPLIT</span><p>${esc(desc)}</p></div>`:''}
+    ${c.post_caption?`<div class="ciw-video-caption"><span>DESCRIPCIÓN PARA PUBLICAR</span><p>${esc(c.post_caption)}</p></div>`:''}
+    ${extraBlock}
+    <div class="ciw-video-actions">
+      <button type="button" class="ciw-open-video" data-ciw-open-attempt="${esc(a.id)}" data-ciw-open-track="${esc(t.id)}">Ver ficha completa</button>
+      <button type="button" class="ciw-edit-video" data-ciw-edit-attempt="${esc(a.id)}">Editar textos</button>
+      ${safeUrl?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}
+    </div>
+  </article>`;
+}
+  function winnerDetail(w){
+  const ts=tracks(w.id);
+  const tests=ts.flatMap(t=>attempts(t.id).filter(a=>!a.is_discarded).map(a=>({t,a})));
+  const n=tests.length;
+  const date=w.winner_date?String(w.winner_date).split('-').reverse().join('/'):'Sin fecha';
+  return `<section class="ciw-round-board">
+    <header class="ciw-round-head">
+      <div>
+        <div class="ciw-round-kicker">RONDA DEL ${esc(date)} <span>·</span> ${n} pruebas independientes</div>
+        <h2>${esc(w.name)}</h2>
+        <p>Una tarjeta por prueba. Encuentra los textos, la idea y el Reel original sin repetir vídeos.</p>
+      </div>
+      <button type="button" data-ciw-edit-winner="${esc(w.id)}">Editar ronda</button>
+    </header>
+    ${n?`<div class="ciw-round-test-grid">${tests.map(({t,a},i)=>splitCard(t,a,i,n,w)).join('')}</div>`:'<div class="ciw-round-empty">Todavía no hay pruebas en esta ronda.</div>'}
+    ${ts.length?`<div class="ciw-round-create"><span>Añadir otra variante a esta ronda</span><div>${ts.map(t=>`<button type="button" data-ciw-new-attempt="${esc(t.id)}">+ ${esc(varLabel(t.variable))}</button>`).join('')}</div></div>`:''}
+  </section>`;
+}
+    function trackCard(t){
     const as=attempts(t.id),best=bestAttempt(t),current=as.filter(a=>!a.is_discarded).sort((a,b)=>Number(b.views||0)-Number(a.views||0))[0]||null;
     return`<button class="ciw-track-card ${t.id===S.trackId?'active':''}" data-ciw-track="${esc(t.id)}" data-variable="${esc(t.variable)}"><div class="ciw-track-top"><span class="ciw-track-icon">${esc(varIcon(t.variable))}</span><div><small>Split test</small><h3>${esc(varLabel(t.variable))}</h3></div><b>${as.length}</b></div><div class="ciw-track-body">${best?`<div class="ciw-best-mini"><span>★ Mejor</span><b>${esc(best.title)}</b><small>${fmt(best.views)} views</small></div>`:current?`<div class="ciw-best-mini neutral"><span>Mejor data actual</span><b>${esc(current.title)}</b><small>${fmt(current.views)} views</small></div>`:'<div class="ciw-no-attempt">Sin intentos todavía</div>'}</div><div class="ciw-track-foot"><span>${best?'Mejor definido':as.length?'En progreso':'Por empezar'}</span><strong>Abrir →</strong></div></button>`;
   }
@@ -352,6 +421,23 @@
     }
     const productBtn=e.target.closest?.('[data-ciw-product]');if(productBtn){S.productId=productBtn.dataset.ciwProduct;S.winnerId='';S.trackId='';normalizeSelection();render();return;}
     const winnerBtn=e.target.closest?.('[data-ciw-winner]');if(winnerBtn){S.winnerId=winnerBtn.dataset.ciwWinner;S.trackId=tracks(S.winnerId)[0]?.id||'';normalizeSelection();render();return;}
+    const direct=e.target.closest?.('[data-ciw-open-attempt]');
+    if(direct){
+      e.preventDefault();
+      const aid=direct.dataset.ciwOpenAttempt;
+      const tid=direct.dataset.ciwOpenTrack;
+      const a=attempt(aid),t=track(tid);
+      if(!a||!t){toast('No se pudo encontrar esta prueba','error');return;}
+      S.trackId=tid;
+      sessionStorage.setItem('creativeos_winner_track',tid);
+      sessionStorage.setItem('creativeos_winner_attempt:'+tid,aid);
+      if(window.CreativeOSSplitBoard?.openTrack){
+        window.CreativeOSSplitBoard.openTrack(tid);
+        window.CreativeOSSplitSheetGroups?.scheduleScan?.(40);
+        window.CreativeOSSplitAttemptSelector?.scheduleDecorate?.(40);
+      }else openAttemptModal(t,a);
+      return;
+    }
     const trackBtn=e.target.closest?.('[data-ciw-track]');if(trackBtn){S.trackId=trackBtn.dataset.ciwTrack;sessionStorage.setItem('creativeos_winner_track',S.trackId);render();setTimeout(()=>document.getElementById('ciwTrackDetail')?.scrollIntoView({behavior:'smooth',block:'start'}),40);return;}
     const mode=e.target.closest?.('[data-ciw-mode]');if(mode){S.mode=mode.dataset.ciwMode;sessionStorage.setItem('creativeos_winner_mode',S.mode);render();return;}
     if(e.target.closest?.('[data-ciw-refresh]')){guard(load);return;}
