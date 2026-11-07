@@ -238,7 +238,7 @@
     ${extraBlock}
     <div class="ciw-video-actions">
       <button type="button" class="ciw-open-video" data-ciw-open-attempt="${esc(a.id)}" data-ciw-open-track="${esc(t.id)}">Ver ficha completa</button>
-      <button type="button" class="ciw-edit-video" data-ciw-edit-attempt="${esc(a.id)}">Editar textos</button>
+      <button type="button" class="ciw-edit-video" data-ciw-edit-attempt="${esc(a.id)}">Editar prueba</button>
       ${safeUrl?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Abrir Reel ↗</a>`:''}
     </div>
   </article>`;
@@ -345,7 +345,7 @@
   }
   function openAttemptModal(t,a=null){
     const c=a?.content||{},isEdit=!!a;
-    modal(`<div class="ciw-modal-head"><div><span>${esc(varLabel(t.variable))}</span><h2>${isEdit?'Editar intento':'Nuevo intento'}</h2><p>Este editor cambia según el tipo de split.</p></div><button data-ciw-close>×</button></div><div class="ciw-form-grid">${variableFields(t.variable,c)}${['text_hook','avatar'].includes(t.variable)?splitCopyInputs(c):''}${splitMetaInputs(c)}<label>Estado<select id="ciwAttemptStatus">${STATUS.map(([k,l])=>`<option value="${k}" ${a?.production_status===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label><label class="wide">Imagen / vídeo / audio<input id="ciwAttemptFile" type="file" accept="image/*,video/*,audio/*"></label>${a?.media_url?`<div class="ciw-existing-media wide">${preview(a.media_url,a.media_type,a.media_name)}<span>Media actual</span></div>`:''}${textarea('ciwAttemptNotes','Nota',a?.notes||'','Qué cambiaste, qué esperas, contexto...')}</div><div class="ciw-modal-actions"><button data-ciw-close>Cancelar</button><button class="primary" data-ciw-save-attempt="${esc(a?.id||'')}" data-track="${esc(t.id)}">Guardar intento</button></div>`);
+    modal(`<div class="ciw-modal-head"><div><span>${esc(varLabel(t.variable))}</span><h2>${isEdit?'Editar intento':'Nuevo intento'}</h2><p>Este editor cambia según el tipo de split.</p></div><button data-ciw-close>×</button></div><div class="ciw-form-grid">${variableFields(t.variable,c)}${splitCopyInputs(c)}${splitMetaInputs(c)}<label>Estado<select id="ciwAttemptStatus">${STATUS.map(([k,l])=>`<option value="${k}" ${a?.production_status===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label><label class="wide">Imagen / vídeo / audio<input id="ciwAttemptFile" type="file" accept="image/*,video/*,audio/*"></label>${a?.media_url?`<div class="ciw-existing-media wide">${preview(a.media_url,a.media_type,a.media_name)}<span>Media actual</span></div>`:''}${textarea('ciwAttemptNotes','Nota',a?.notes||'','Qué cambiaste, qué esperas, contexto...')}</div><div class="ciw-modal-actions"><button data-ciw-close>Cancelar</button><button class="primary" data-ciw-save-attempt="${esc(a?.id||'')}" data-track="${esc(t.id)}">Guardar intento</button></div>`);
   }
   function openDataModal(a){
     modal(`<div class="ciw-modal-head"><div><span>Rendimiento</span><h2>${esc(a.title)}</h2><p>Añade la data cuando el vídeo haya tenido tiempo suficiente para distribuirse.</p></div><button data-ciw-close>×</button></div><div class="ciw-form-grid">${input('ciwDataViews','Views',a.views??'','number')}${input('ciwDataSales','Ventas',a.sales??'','number')}${input('ciwDataLikes','Likes',a.likes??'','number')}${input('ciwDataComments','Comentarios',a.comments??'','number')}${input('ciwDataDate','Fecha de métrica',a.metric_date||today(),'date')}${textarea('ciwDataNotes','Nota',a.notes||'','Lectura rápida del resultado...')}</div><div class="ciw-modal-actions"><button data-ciw-close>Cancelar</button><button class="primary" data-ciw-save-data="${esc(a.id)}">Guardar data</button></div>`);
@@ -373,8 +373,7 @@
     const main=document.getElementById('ciwAttemptMain')?.value.trim()||'';const file=document.getElementById('ciwAttemptFile')?.files?.[0]||null;const media=file?await uploadSelected(file,`split-${t.variable}`,id||uid('attempt')):null;
     const list=attempts(trackId);
     const value=id=>document.getElementById(id)?.value.trim()||'';
-    const copy=['text_hook','avatar'].includes(t.variable)?
-      Object.fromEntries(['text_1','text_2','text_3','text_4','cta'].map(k=>[k,value('ciw-'+k)])):{};
+    const copy=Object.fromEntries(['text_1','text_2','text_3','text_4','cta'].map(k=>[k,value('ciw-'+k)]));
     const sequence=['text_1','text_2','text_3','text_4'].map((k,i)=>copy[k]?`Texto ${i+1}: ${copy[k]}`:'').filter(Boolean).join('\n');
     const meta={
       description:value('ciwSplitDescription'),
@@ -384,10 +383,8 @@
       reference_url:value('ciwSplitReference')
     };
     const content={...(old?.content||{}),...contentFromForm(t.variable,title,main),...copy,...meta};
-    if(t.variable==='text_hook'||t.variable==='avatar'){
-      if(sequence)content.text_sequence=sequence;
-      if(copy.text_1)content.hook_text=copy.text_1;
-    }
+    if(sequence)content.text_sequence=sequence;
+    if(copy.text_1)content.hook_text=copy.text_1;
     const row={id:id||uid('attempt'),track_id:trackId,product_id:S.productId,title,production_status:document.getElementById('ciwAttemptStatus')?.value||'waiting_prepare',content,media_url:media?.url||old?.media_url||null,media_storage_path:media?.storagePath||old?.media_storage_path||null,media_name:media?.name||old?.media_name||null,media_type:media?.type||old?.media_type||null,views:old?.views??null,likes:old?.likes??null,comments:old?.comments??null,sales:old?.sales??null,revenue:old?.revenue??null,posted_at:old?.posted_at||null,metric_date:old?.metric_date||null,is_best:old?.is_best||false,is_discarded:old?.is_discarded||false,notes:document.getElementById('ciwAttemptNotes')?.value.trim()||null,sort_order:old?.sort_order??list.length};
     await api({action:'upsert_attempt',...row});
     await api({action:'upsert_track',...t,status:'active'});
