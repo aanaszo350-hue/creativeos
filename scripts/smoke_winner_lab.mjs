@@ -46,36 +46,40 @@ try{
   })()`);
   if(!cleanedTabsOK)throw new Error('Split Tests cleanup did not hide empty or old products');
   await click(`document.querySelector('[data-ciw-product="carpillow"]')`,'car pillow split product');
-  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===6`,'six visible car pillow splits: angle, three texts, music, avatar');
+  await waitFor(`document.querySelectorAll('.ciw-quick-split').length===4`,'four current car-pillow Split Tests only');
   const carPillowOK=await evalJS(`(()=>{
     const cards=[...document.querySelectorAll('.ciw-quick-split')];
     const screen=document.querySelector('#ciHost')?.innerText||'';
-    const targets=[
-      ['Ángulo de venta · Padre e hija','DfVdGUipqku'],
-      ['Split de texto · Princesas copiloto','DfVdGUipqku'],
+    const expected=[
       ['Split de texto · No dejes que lo vea','DfFUKDmuPT6'],
       ['Split de texto · POV almohada perfecta','DfP1ae7Oj4x'],
       ['Split de música · I Want for Christmas','DfIenWKJ7fb'],
       ['Split de avatar · Señor que funciona','DfIenWKJ7fb']
     ];
-    const urlOK=targets.every(([title,reel])=>cards.some(card=>card.querySelector('b')?.innerText===title && card.querySelector('a')?.href.includes('/reel/'+reel+'/')));
-    return cards.length===6 && urlOK
-      && screen.includes('Mi hija copiloto no volverá a quejarse en los viajes largos 😴👑')
-      && screen.includes('“Las princesas copiloto son difíciles de regalar” 🥺💕')
+    return cards.length===4
+      && expected.every(([title,reel],i)=>cards[i].querySelector('b')?.innerText===title && cards[i].querySelector('a')?.href.includes('/reel/'+reel+'/'))
+      && screen.includes('Almohada de coche · 4 Split Tests nuevos · 07/11')
+      && screen.includes('4 Split Tests de esta ronda')
       && screen.includes('No dejes que una princesa copiloto vea esto 🤭👑')
       && screen.includes('POV: Encuentras la almohada perfecta para tu princesa copiloto 🤭')
       && screen.includes('cambia el coche por el coche rojo, mantén la ropa blanca')
       && screen.includes('ropa gris') && screen.includes('I Want for Christmas')
       && screen.includes('cambiar avatar por señor, mantener coche rojo, cambiar música a música viral y cambiar texto a texto viral')
-      && ['sales_angle','text_hook','audio','avatar'].every(type=>document.querySelector('.ciw-track-card[data-variable="'+type+'"]'));
+      && !screen.includes('Mi hija copiloto no volverá a quejarse')
+      && !screen.includes('Las princesas copiloto son difíciles de regalar')
+      && !document.querySelector('.ciw-track-card[data-variable="sales_angle"]')
+      && ['text_hook','audio','avatar'].every(type=>document.querySelector('.ciw-track-card[data-variable="'+type+'"]'))
+      && document.querySelectorAll('.ciw-track-card').length===3
+      && document.querySelector('.ciw-reference-link')?.href.includes('/reel/DfFUKDmuPT6/');
   })()`);
-  if(!carPillowOK)throw new Error('Car pillow six Split Tests missing exact copy, notes, types or correct Reels');
-  await click(`document.querySelector('.ciw-track-card[data-variable="text_hook"]')`,'open car pillow text splits');
+  if(!carPillowOK)throw new Error('Car pillow four Split Tests are mixed with old attempts or incorrect Reels');
+  await click(`document.querySelector('.ciw-track-card[data-variable="text_hook"]')`,'open current car pillow text splits');
   const carCopyOK=await evalJS(`(()=>{
     const detail=document.querySelector('#ciwTrackDetail')?.innerText||'';
-    return ['No dejes que una princesa copiloto vea esto 🤭👑','POV: Encuentras la almohada perfecta para tu princesa copiloto 🤭','cambia el coche por el coche rojo, mantén la ropa blanca'].every(x=>detail.includes(x));
+    return ['No dejes que una princesa copiloto vea esto 🤭👑','POV: Encuentras la almohada perfecta para tu princesa copiloto 🤭','cambia el coche por el coche rojo, mantén la ropa blanca'].every(x=>detail.includes(x))
+      && !detail.includes('Mi hija copiloto');
   })()`);
-  if(!carCopyOK)throw new Error('Car pillow detailed text Split Test missing copy or change-car note');
+  if(!carCopyOK)throw new Error('Current car pillow text splits omit required notes or contain old copy');
   // Nail polish Reel: three distinct splits with exact supplied copy, original-video-text pending flag and background concept.
   await waitFor(`!!document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
   await click(`document.querySelector('[data-ciw-product="pintaunas"]')`,'nail polish split product');
